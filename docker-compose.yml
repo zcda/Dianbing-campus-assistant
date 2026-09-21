@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: pkb-postgres
+    environment:
+      POSTGRES_DB: pkb
+      POSTGRES_USER: pkb
+      POSTGRES_PASSWORD: pkb123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pkb-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pkb -d pkb"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pkb-pgdata:

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: pkb
+  datasource:
+    url: ${PKB_DB_URL:jdbc:postgresql://localhost:5432/pkb}
+    username: ${PKB_DB_USER:pkb}
+    password: ${PKB_DB_PASSWORD:pkb123}
+
+server:
+  port: 8080
+
+rag:
+  # OpenAI 兼容服务基地址（默认本地 Ollama；对接云 API 时用环境变量 RAG_API_BASE_URL 覆盖）
+  api-base-url: ${RAG_API_BASE_URL:http://localhost:11434/v1}
+  # Ollama 无需鉴权，占位 "ollama" 即可；对接云 API 时设置环境变量 LLM_API_KEY 覆盖
+  api-key: ${LLM_API_KEY:ollama}
+  # 对话模型：本地 llama3.1:8b（ollama pull llama3.1:8b）
+  chat-model: ${RAG_CHAT_MODEL:llama3.1:8b}
+  # 向量模型：bge-m3，1024 维、中英文表现好（ollama pull bge-m3）。注意 llama3.1 是生成模型，不能做向量化
+  embedding-model: ${RAG_EMBEDDING_MODEL:bge-m3}
+  embedding-dimension: 1024
+  # 检索返回的片段数
+  top-k: 5
+  # 余弦相似度阈值：低于该值视为不相关，直接回答"未找到"，不调用 LLM
+  min-similarity: 0.30
