@@ -44,6 +44,16 @@ final class EvalSupport {
         List<String> refs = samples.stream().filter(EvalSample::requiresRag)
                 .flatMap(s -> s.expectedChunks().stream()).distinct().toList();
         if (refs.isEmpty()) {
+            if (!samples.isEmpty() && samples.stream().allMatch(EvalSample::strictRefusal)) {
+                Long active = db.sql("""
+                        SELECT count(*) FROM note WHERE status='active' AND index_ready=TRUE
+                          AND (effective_from IS NULL OR effective_from<=CURRENT_DATE)
+                          AND (effective_to IS NULL OR effective_to>=CURRENT_DATE)
+                        """)
+                        .query(Long.class).single();
+                if (active != null && active > 0) return;
+                throw new IllegalStateException("纯拒答评测仍需已索引的有效规则语料");
+            }
             throw new IllegalStateException("评测集没有任何已标注的必要证据，无法计算检索质量");
         }
         List<String> invalid = new ArrayList<>();

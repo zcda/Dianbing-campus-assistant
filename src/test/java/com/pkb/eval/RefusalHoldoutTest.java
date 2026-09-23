@@ -25,7 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @RequiresPostgres
 @EnabledIfSystemProperty(named = "eval.online", matches = "true")
 class RefusalHoldoutTest {
-    private static final String DATASET = "/eval/campus_refusal_holdout_v1.jsonl";
+    private static final List<String> DATASETS = List.of(
+            "/eval/campus_refusal_holdout_v1.jsonl", "/eval/campus_refusal_holdout_v2.jsonl",
+            "/eval/campus_refusal_near_neighbor_v1.jsonl");
 
     @Autowired private JdbcClient db;
     @Autowired private EmbeddingClient embeddingClient;
@@ -36,8 +38,13 @@ class RefusalHoldoutTest {
 
     @Test
     void unseenOutOfCorpusQuestionsAreRejectedByTheProductionRetrievalGate() throws Exception {
-        List<Holdout> holdouts = load();
-        assertEquals(12, holdouts.size(), "留出集题数变化需人工复核分母");
+        List<Holdout> holdouts = new ArrayList<>();
+        for (String dataset : DATASETS) {
+            List<Holdout> loaded = load(dataset);
+            assertEquals(dataset.contains("near_neighbor") ? 8 : 12, loaded.size(),
+                    dataset + " 题数变化需人工复核分母");
+            holdouts.addAll(loaded);
+        }
         Long active = db.sql("SELECT count(*) FROM note WHERE status='active' AND index_ready=TRUE")
                 .query(Long.class).single();
         assertTrue(active != null && active > 0, "先导入并索引已核验的真实规则 PDF");
@@ -69,11 +76,11 @@ class RefusalHoldoutTest {
                 + "；当前闸门=" + props.getEvidence().getMinGateScore() + "：" + failures);
     }
 
-    private List<Holdout> load() throws Exception {
+    private List<Holdout> load(String dataset) throws Exception {
         var mapper = new ObjectMapper();
         var rows = new ArrayList<Holdout>();
-        try (var input = RefusalHoldoutTest.class.getResourceAsStream(DATASET)) {
-            if (input == null) throw new IllegalStateException("找不到拒答留出集：" + DATASET);
+        try (var input = RefusalHoldoutTest.class.getResourceAsStream(dataset)) {
+            if (input == null) throw new IllegalStateException("找不到拒答留出集：" + dataset);
             var reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
             String line;
             while ((line = reader.readLine()) != null) {

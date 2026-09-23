@@ -1,0 +1,3 @@
+{"query_id":"N01","query":"2026级软件工程学硕培养方案里学位课的教材购买链接是什么？","requires_rag":false,"expected_behavior":"refuse","category":"近邻拒答","note":"有效培养方案不提供教材购买链接"}
+{"query_id":"N06","query":"2026级新闻传播学硕课程总学分录入错误后怎样修改教务系统？","requires_rag":false,"expected_behavior":"refuse","category":"近邻拒答","note":"有效培养方案不提供教务系统纠错流程"}
+{"query_id":"N07","query":"2026级生物医学工程学硕选课时间冲突后怎样申请人工调课？","requires_rag":false,"expected_behavior":"refuse","category":"近邻拒答","note":"有效培养方案不提供人工调课流程"}

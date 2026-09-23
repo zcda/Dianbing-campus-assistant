@@ -34,13 +34,13 @@ import java.util.HexFormat;
  * 生成层评测（设计文档 D7，补上 MVP-0 唯一的真正缺口 F7）：
  * 录制与评分分离 —— 录制阶段只调生产链路（/api/chat 同款 RagService.chat），
  * 把 (query_id, question, 子问题, 各通道命中, sources, answer, done_reason, timings) 原样写 eval_record；
- * 评分阶段纯计算零 token（检索类指标 + 角标可映射率 + 拒答准确率），LLM-as-judge 仅用于答案正确率。
+ * 评分阶段纯计算零 token（检索类指标 + 角标可映射率 + 两种拒答率），LLM-as-judge 仅用于答案正确率。
  * 比较历史 run 时要求语料与评测集指纹一致；更换模型或参数仍需重新录制。
  *
  * <p>三个指标（定义无歧义）：
  * <ul>
  *   <li>角标可映射率 = 可映射角标数 / 角标总数，纯字符串解析，角标总数为 0 单列计数；</li>
- *   <li>拒答准确率 = 无依据样本中 done.reason == "no_sources" 的占比；这是闸门拒答，不代表最终文字没有拒答；</li>
+ *   <li>检索侧拒答率 = 无依据样本中 done.reason == "no_sources" 的占比；最终标准文案拒答率单独计算；</li>
  *   <li>答案正确率 = judge（与生产不同的模型）判 0/1/2 的均值 + 完全正确率。</li>
  * </ul>
  *
@@ -238,12 +238,16 @@ class GenerationEvalTest {
         }
         metrics.put("过召回率", EvalSupport.mean(overRetrieval));
 
-        // —— 生成类 1：拒答准确率（看 done.reason，不调用任何模型）——
+        // —— 生成类 1：分别统计检索侧拒答与最终文案拒答；后者不表示检索成功 ——
         List<Double> refusalAccuracy = new ArrayList<>();
+        List<Double> finalTextRefusal = new ArrayList<>();
         for (Recorded r : outOfLibrary) {
             refusalAccuracy.add("no_sources".equals(r.outcome().doneReason()) ? 1.0 : 0.0);
+            finalTextRefusal.add(r.outcome().answer() != null
+                    && props.getNotFoundAnswer().strip().equals(r.outcome().answer().strip()) ? 1.0 : 0.0);
         }
-        metrics.put("拒答准确率", EvalSupport.mean(refusalAccuracy));
+        metrics.put("检索侧拒答率", EvalSupport.mean(refusalAccuracy));
+        metrics.put("最终标准文案拒答率", EvalSupport.mean(finalTextRefusal));
 
         // —— 生成类 2：只能自动判断角标是否映射到来源，不能据此声称来源支撑结论 ——
         List<Double> coverage = new ArrayList<>();
