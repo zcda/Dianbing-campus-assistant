@@ -168,7 +168,7 @@ PostgreSQL / pgvector / tsvector
 .\mvnw.cmd '-Dspring-boot.run.main-class=com.pkb.demo.CampusDemoApplication' spring-boot:run
 ```
 
-打开 <http://127.0.0.1:8080/campus.html>；`/api/campus/demo` 与 `/mcp` 同时可用。此入口只加载虚构校园服务，不提供 RAG 对话或规则管理接口，便于无数据库的秋招现场演示。
+打开 <http://127.0.0.1:8080/campus.html>；页面可输入星期和节次交互查询 Mock 空教室，`/api/campus/demo`、`/api/campus/free-classrooms` 与 `/mcp` 同时可用。此入口只加载虚构校园服务，不提供 RAG 对话或规则管理接口，便于无数据库的秋招现场演示。
 
 ### 完整 RAG + 校园助手
 

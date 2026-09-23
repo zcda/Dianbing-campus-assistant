@@ -13,11 +13,14 @@
     section{background:white;border:1px solid #d9e5e1;border-radius:12px;padding:20px;box-shadow:0 4px 18px #17312d0a}
     h2{font-size:18px;margin:0 0 12px}.meta{color:#53706a;font-size:13px}table{border-collapse:collapse;width:100%;font-size:14px}
     th,td{padding:9px 5px;border-bottom:1px solid #e7efec;text-align:left}th{color:#53706a;font-weight:600}code{background:#edf3f1;padding:2px 5px;border-radius:4px}
-    #error{color:#b42318}.small{font-size:12px;color:#53706a}
+    #error,.form-error{color:#b42318}.small{font-size:12px;color:#53706a}
+    .room-form{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.room-form label{font-size:13px;color:#53706a}
+    .room-form input{display:block;width:86px;padding:6px;border:1px solid #becfc9;border-radius:5px}
+    .room-form button{padding:7px 12px;border:0;border-radius:5px;background:#136f54;color:white;cursor:pointer}
   </style>
 </head>
 <body>
-  <header><a href="/">← 返回统一问答</a><h1>校园服务 · Mock 演示</h1><p>课程、课表、成绩与考试共用同一个领域服务；MCP Tool 通过 /mcp 暴露。</p></header>
+  <header><a id="chatLink" href="/" hidden>← 返回统一问答</a><h1>校园服务 · Mock 演示</h1><p>课程、课表、成绩与考试共用同一个领域服务；MCP Tool 通过 /mcp 暴露。</p></header>
   <main>
     <div class="notice"><strong>演示数据</strong>：所有姓名、课程和成绩均为虚构，固定为同一名演示学生；当前没有学生登录或真实教务系统接入。</div>
     <p id="error"></p>
@@ -30,7 +33,7 @@
       <section><h2>我的成绩</h2><table><thead><tr><th>课程</th><th>成绩</th><th>状态</th></tr></thead><tbody id="grades"></tbody></table></section>
       <section><h2>我的课表</h2><table><thead><tr><th>星期 / 节次</th><th>课程</th><th>教室</th></tr></thead><tbody id="schedule"></tbody></table></section>
       <section><h2>考试安排</h2><table><thead><tr><th>日期 / 时间</th><th>课程</th><th>考场</th></tr></thead><tbody id="exams"></tbody></table></section>
-      <section><h2>空教室示例</h2><p class="meta">2026-秋 · 周二第 3–4 节</p><div id="freeClassrooms" class="meta">加载中…</div><p class="small">根据虚构的整校每周排课表推算，不代表实时占用或可预约状态。</p></section>
+      <section><h2>查询 Mock 空教室</h2><form id="roomForm" class="room-form"><label>星期<input name="weekday" type="number" min="1" max="7" value="2" required></label><label>起始节<input name="startSection" type="number" min="1" max="12" value="3" required></label><label>结束节<input name="endSection" type="number" min="1" max="12" value="4" required></label><button type="submit">查询</button></form><p id="roomError" class="form-error" role="alert"></p><div id="freeClassrooms" class="meta">2026-秋 · 周二第 3–4 节：加载中…</div><p class="small">根据虚构的整校每周排课表推算，不代表实时占用或可预约状态。</p></section>
     </div>
   </main>
   <script>
@@ -45,8 +48,20 @@
       rows('grades',d.grades,g=>[`${g.courseCode} ${g.courseName}`,g.score,g.status]);
       rows('schedule',d.schedule,m=>[`周${m.weekday} · ${m.startSection}-${m.endSection}节`,m.courseName,m.room]);
       rows('exams',d.exams,e=>[`${e.date} ${e.startTime}-${e.endTime}`,e.courseName,e.room]);
-      document.getElementById('freeClassrooms').textContent=d.freeClassroomsExample.map(r=>`${r.code}（${r.building}，${r.capacity}座）`).join('、') || '没有符合条件的模拟空教室';
+      document.getElementById('freeClassrooms').textContent=`2026-秋 · 周二第 3–4 节：${d.freeClassroomsExample.map(r=>`${r.code}（${r.building}，${r.capacity}座）`).join('、') || '没有符合条件的模拟空教室'}`;
     }).catch(e=>document.getElementById('error').textContent='加载失败：'+e.message);
+    fetch('/api/config').then(r=>{if(r.ok)document.getElementById('chatLink').hidden=false}).catch(()=>{});
+    document.getElementById('roomForm').addEventListener('submit',async event=>{
+      event.preventDefault();
+      const error=document.getElementById('roomError');error.textContent='';
+      const params=new URLSearchParams(new FormData(event.currentTarget));
+      try{
+        const response=await fetch('/api/campus/free-classrooms?'+params);
+        if(!response.ok)throw new Error(`HTTP ${response.status}`);
+        const result=await response.json();
+        document.getElementById('freeClassrooms').textContent=`${result.semester} · 周${result.weekday}第 ${result.startSection}–${result.endSection} 节：${result.rooms.map(r=>`${r.code}（${r.building}，${r.capacity}座）`).join('、') || '没有符合条件的模拟空教室'}`;
+      }catch(e){error.textContent='查询失败：'+e.message}
+    });
   </script>
 </body>
 </html>

@@ -86,6 +86,23 @@ class CampusMcpHttpTest {
         assertTrue(preview.body().contains("fictional-mock"));
         assertTrue(preview.body().contains("creditGap"));
 
+        var rooms = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port
+                        + "/api/campus/free-classrooms?weekday=2&startSection=3&endSection=4"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, rooms.statusCode());
+        assertTrue(rooms.body().contains("A103"));
+        assertFalse(rooms.body().contains("A104"));
+        var invalidRooms = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port
+                        + "/api/campus/free-classrooms?weekday=2&startSection=5&endSection=4"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(400, invalidRooms.statusCode());
+
+        var page = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port
+                        + "/campus.html")).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, page.statusCode());
+        assertTrue(page.body().contains("id=\"roomForm\""));
+        assertTrue(page.body().contains("id=\"chatLink\" href=\"/\" hidden"));
+
         for (String asset : new String[]{"vue.global.prod.js", "marked.min.js"}) {
             var script = client.send(HttpRequest.newBuilder(URI.create(
                     "http://127.0.0.1:" + port + "/vendor/" + asset)).GET().build(),
