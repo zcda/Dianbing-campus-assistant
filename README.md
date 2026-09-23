@@ -199,7 +199,7 @@ docker compose up -d
 
 扩展验收集是 [campus_eval_v2.jsonl](src/test/resources/eval/campus_eval_v2.jsonl)：40 条样本，包含 30 条应答、5 条严格拒答和 5 条适用范围提醒，覆盖计算机、软件工程、数学、新闻传播、航空宇航、生物医学工程、论文要求和实践学分。每条应答题的必要事实都绑定真实 PDF 片段，并由 `CampusEvalCorpusTest` 校验。
 
-v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2026-09-22.md)；当前 Hit@5 为 93.3%，并暴露了软件工程复合学分和生物医学工程选课条件两个召回缺口。
+v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2026-09-22.md)；重新建索引后的 [在线回归记录](doc/杏规-在线回归记录-2026-09-23.md) 测得 Hit@5 为 96.7%、必要证据 Recall@5 为 95.0%。C128 已命中；C119 原句单查询仍未命中，但完整问答的确定性拆分召回了两条证据。闸门 0.60 在本次 5 道库外题上实现零过召回，尚需独立留出集验证。
 
 ```powershell
 .\mvnw.cmd '-Dtest=CampusEvalCorpusTest,RuleChunkStrategyTest,RuleScopeTest,TextCleanerRuleTest' test
@@ -209,9 +209,11 @@ v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2
 # 使用扩展集时覆盖数据集参数
 .\mvnw.cmd '-Dtest=RetrievalEvalTest' '-Deval.dataset=/eval/campus_eval_v2.jsonl' test
 .\mvnw.cmd '-Dtest=GenerationEvalTest' '-Deval.dataset=/eval/campus_eval_v2.jsonl' '-Deval.tag=campus-v2' '-Deval.judge=false' test
+# 对复杂题只跑指定题号
+.\mvnw.cmd '-Dtest=GenerationEvalTest' '-Deval.dataset=/eval/campus_eval_v2.jsonl' '-Deval.queryIds=C119,C128' '-Deval.judge=false' test
 ```
 
-检索和生成评测需要 PostgreSQL、已完成的有效规则索引，以及 Ollama。缺少当前有效的金标准证据时，测试会跳过并说明原因，不能把跳过当作通过。生成评测输出到 `target/eval-reports/`。现有 120 条 Java 技术问答在 `eval_set_v2.jsonl` 中保留为历史数据，**不用于证明杏规质量**。
+检索和生成评测需要 PostgreSQL、已完成的有效规则索引，以及 Ollama。数据库或 Embedding 服务不可用时测试会跳过；数据库已连通但金标准证据缺失或失效时测试会失败，并提示重新导入或标注，不能把跳过当作通过。生成评测输出到 `target/eval-reports/`。现有 120 条 Java 技术问答在 `eval_set_v2.jsonl` 中保留为历史数据，**不用于证明杏规质量**。
 
 本地 `mvn test` 在 PostgreSQL 未启动时会提前跳过 5 个依赖数据库的 SQL/评测测试；其余单元、语料与 Mock MCP HTTP 测试仍执行。GitHub Actions 分别运行基础测试和带 pgvector 服务的 SQL Repository 测试；数据库作业要求真实连接，连接失败不会以跳过掩盖。完整 RAG 检索与生成指标仍须启动 PostgreSQL、导入有效语料和模型服务后按上面的命令单独运行，不应把 CI 绿色误读为在线评测通过。
 

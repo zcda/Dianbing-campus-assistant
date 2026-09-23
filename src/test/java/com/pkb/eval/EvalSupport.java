@@ -2,7 +2,6 @@ package com.pkb.eval;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkb.search.Source;
-import org.junit.jupiter.api.Assumptions;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 import java.io.BufferedReader;
@@ -44,7 +43,9 @@ final class EvalSupport {
     static void requireCurrentEvidence(JdbcClient db, List<EvalSample> samples) {
         List<String> refs = samples.stream().filter(EvalSample::requiresRag)
                 .flatMap(s -> s.expectedChunks().stream()).distinct().toList();
-        Assumptions.assumeFalse(refs.isEmpty(), "评测集没有任何已标注的必要证据");
+        if (refs.isEmpty()) {
+            throw new IllegalStateException("评测集没有任何已标注的必要证据，无法计算检索质量");
+        }
         List<String> invalid = new ArrayList<>();
         for (String ref : refs) {
             String[] parts = ref.split(":", -1);
@@ -67,8 +68,10 @@ final class EvalSupport {
                 invalid.add(ref);
             }
         }
-        Assumptions.assumeTrue(invalid.isEmpty(), "评测集期望证据并非当前有效规则或分块编号已变化："
-                + invalid.stream().limit(8).toList() + "。请导入真实校园规则并重新标注金标准。");
+        if (!invalid.isEmpty()) {
+            throw new IllegalStateException("评测集期望证据并非当前有效规则或分块编号已变化："
+                    + invalid.stream().limit(8).toList() + "。请导入真实校园规则并重新标注金标准。");
+        }
     }
 
     /** 用文档名、学科上下文和原文片段解析金标准；重建索引后不依赖易变的 noteId:seq。 */
@@ -91,8 +94,11 @@ final class EvalSupport {
                         .param("context", "%" + evidence.context() + "%")
                         .query((rs, row) -> rs.getLong("note_id") + ":" + rs.getInt("seq"))
                         .optional();
-                Assumptions.assumeTrue(match.isPresent(), "未找到评测金标准原文：" + sample.queryId()
-                        + " / " + evidence.context() + " / " + evidence.contains());
+                if (match.isEmpty()) {
+                    throw new IllegalStateException("未找到评测金标准原文：" + sample.queryId()
+                            + " / " + evidence.context() + " / " + evidence.contains()
+                            + "。请重建索引后核对语料与标注。");
+                }
                 refs.add(match.orElseThrow());
             }
             resolved.add(sample.withExpectedChunks(refs.stream().distinct().toList()));

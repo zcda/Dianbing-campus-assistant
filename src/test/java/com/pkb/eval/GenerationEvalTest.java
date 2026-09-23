@@ -54,6 +54,7 @@ class GenerationEvalTest {
 
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
     private int evaluatedSampleCount;
+    private String evaluatedQueryIds;
 
     @Autowired
     private RagService ragService;
@@ -70,14 +71,24 @@ class GenerationEvalTest {
 
     @Test
     void recordAndScore() throws Exception {
-        List<EvalSample> samples = EvalSupport.resolveEvidence(db, EvalSupport.load(EVAL_SET));
+        List<EvalSample> samples = EvalSupport.load(EVAL_SET);
+        String selectedIds = System.getProperty("eval.queryIds", "").strip();
+        if (!selectedIds.isEmpty()) {
+            Set<String> requested = Set.of(selectedIds.split("\\s*,\\s*"));
+            samples = samples.stream().filter(s -> requested.contains(s.queryId())).toList();
+            if (samples.size() != requested.size()) {
+                throw new IllegalArgumentException("eval.queryIds 中有不存在或重复的题号：" + selectedIds);
+            }
+        }
         String tag = System.getProperty("eval.tag", "gen-" + System.currentTimeMillis());
         Integer limit = Integer.getInteger("eval.limit");
         boolean judgeEnabled = Boolean.parseBoolean(System.getProperty("eval.judge", "true"));
         if (limit != null && limit > 0 && limit < samples.size()) {
             samples = samples.subList(0, limit);
         }
+        samples = EvalSupport.resolveEvidence(db, samples);
         evaluatedSampleCount = samples.size();
+        evaluatedQueryIds = String.join(",", samples.stream().map(EvalSample::queryId).toList());
         EvalSupport.requireCurrentEvidence(db, samples);
 
         // 探针：环境不可用即跳过（R6：不把环境问题误报成质量下降）
@@ -500,12 +511,13 @@ class GenerationEvalTest {
             String raw = db.sql("SELECT metrics::text FROM eval_run WHERE tag = 'campus-baseline' "
                             + "AND config->>'dataset'=:dataset AND config->>'corpusFingerprint'=:fingerprint "
                             + "AND config->>'datasetFingerprint'=:datasetFingerprint "
-                            + "AND config->>'sampleCount'=:sampleCount "
+                            + "AND config->>'sampleCount'=:sampleCount AND config->>'queryIds'=:queryIds "
                             + "AND metrics IS NOT NULL AND id < :beforeRunId ORDER BY id DESC LIMIT 1")
                     .param("dataset", EVAL_SET)
                     .param("fingerprint", corpusFingerprint())
                     .param("datasetFingerprint", datasetFingerprint())
                     .param("sampleCount", String.valueOf(evaluatedSampleCount))
+                    .param("queryIds", evaluatedQueryIds)
                     .param("beforeRunId", beforeRunId)
                     .query(String.class)
                     .optional()
@@ -568,6 +580,7 @@ class GenerationEvalTest {
         m.put("dataset", EVAL_SET);
         m.put("datasetFingerprint", datasetFingerprint());
         m.put("sampleCount", evaluatedSampleCount);
+        m.put("queryIds", evaluatedQueryIds);
         m.put("corpusFingerprint", corpusFingerprint());
         m.put("embeddingModel", props.getEmbeddingModel());
         m.put("chatModel", props.getChatModel());

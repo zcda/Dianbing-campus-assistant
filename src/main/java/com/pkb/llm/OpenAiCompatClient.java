@@ -103,9 +103,11 @@ public class OpenAiCompatClient implements ChatClient, EmbeddingClient {
     @SuppressWarnings("unchecked")
     public void stream(String systemPrompt, String userPrompt, Listener listener) throws Exception {
         requireApiKey(props.getChatApiKey());
+        // 规则问答需要稳定复述证据中的数字；不让服务端模型默认采样温度决定事实。
         Map<String, Object> body = Map.of(
                 "model", props.getChatModel(),
                 "stream", true,
+                "temperature", 0.0,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userPrompt)));

@@ -4,12 +4,17 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import com.pkb.demo.CampusDemoApplication;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@ComponentScan(excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE, classes = CampusDemoApplication.class))
 public class PkbApplication {
 
     public static void main(String[] args) {
