@@ -3,12 +3,15 @@ package com.pkb.conversation;
 import com.pkb.testinfra.RequiresPostgres;
 
 import com.pkb.search.Source;
+import com.pkb.config.RagProperties;
+import com.pkb.config.SchemaInitializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,7 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /** 使用真实 PostgreSQL 验证会话和带 JSON 引用的消息写入。 */
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({ConversationRepository.class, ConversationRepositorySqlTest.TestConfig.class})
+@Import({ConversationRepository.class, SchemaInitializer.class, ConversationRepositorySqlTest.TestConfig.class})
+@EnableConfigurationProperties(RagProperties.class)
 @RequiresPostgres
 class ConversationRepositorySqlTest {
 

@@ -1,19 +1,23 @@
 package com.pkb.note;
 
 import com.pkb.testinfra.RequiresPostgres;
+import com.pkb.config.RagProperties;
+import com.pkb.config.SchemaInitializer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /** 使用真实 PostgreSQL 验证三条 RETURNING 语句；JdbcTest 事务在测试后回滚。 */
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(NoteRepository.class)
+@Import({NoteRepository.class, SchemaInitializer.class})
+@EnableConfigurationProperties(RagProperties.class)
 @RequiresPostgres
 class NoteRepositorySqlTest {
 

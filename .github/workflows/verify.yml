@@ -16,3 +16,31 @@ jobs:
           cache: maven
       - name: Unit, corpus and Mock MCP tests
         run: sh ./mvnw -B test
+
+  sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: pkb
+          POSTGRES_USER: pkb
+          POSTGRES_PASSWORD: pkb123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pkb -d pkb"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      PKB_REQUIRE_POSTGRES: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: PostgreSQL and pgvector repository tests
+        run: sh ./mvnw -B '-Dtest=ConversationRepositorySqlTest,NoteRepositorySqlTest' test

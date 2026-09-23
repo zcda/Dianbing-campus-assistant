@@ -26,6 +26,10 @@ public @interface RequiresPostgres {
                     + "connectTimeout=2", user, password)) {
                 return ConditionEvaluationResult.enabled("PostgreSQL available");
             } catch (Exception ex) {
+                if (Boolean.parseBoolean(System.getenv("PKB_REQUIRE_POSTGRES"))) {
+                    // CI 的数据库作业必须真实执行 SQL 测试，不能把连接失败记为跳过。
+                    return ConditionEvaluationResult.enabled("PostgreSQL required; connection failure must fail the test context");
+                }
                 return ConditionEvaluationResult.disabled("PostgreSQL unavailable; start docker compose: "
                         + ex.getClass().getSimpleName());
             }
