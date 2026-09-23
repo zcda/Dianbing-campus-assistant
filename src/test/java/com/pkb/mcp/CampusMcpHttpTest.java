@@ -85,6 +85,14 @@ class CampusMcpHttpTest {
         assertTrue(preview.body().contains("DEMO-001"));
         assertTrue(preview.body().contains("fictional-mock"));
         assertTrue(preview.body().contains("creditGap"));
+
+        for (String asset : new String[]{"vue.global.prod.js", "marked.min.js"}) {
+            var script = client.send(HttpRequest.newBuilder(URI.create(
+                    "http://127.0.0.1:" + port + "/vendor/" + asset)).GET().build(),
+                    HttpResponse.BodyHandlers.ofByteArray());
+            assertEquals(200, script.statusCode(), asset);
+            assertTrue(script.body().length > 10_000, asset + " was not bundled");
+        }
     }
 
     private HttpResponse<String> post(String body, String session) throws Exception {
