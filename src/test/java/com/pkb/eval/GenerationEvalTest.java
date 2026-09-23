@@ -53,6 +53,7 @@ class GenerationEvalTest {
     private static final String EVAL_SET = System.getProperty("eval.dataset", "/eval/campus_eval_v1.jsonl");
 
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+    private int evaluatedSampleCount;
 
     @Autowired
     private RagService ragService;
@@ -76,6 +77,7 @@ class GenerationEvalTest {
         if (limit != null && limit > 0 && limit < samples.size()) {
             samples = samples.subList(0, limit);
         }
+        evaluatedSampleCount = samples.size();
         EvalSupport.requireCurrentEvidence(db, samples);
 
         // 探针：环境不可用即跳过（R6：不把环境问题误报成质量下降）
@@ -487,9 +489,9 @@ class GenerationEvalTest {
         Files.writeString(file, md.toString());
         System.out.println("报告已写入 " + file.toAbsolutePath());
         if (baseline != null) {
-            System.out.println("（diff 基线来自相同语料指纹的 tag='campus-baseline' 历史 run）");
+            System.out.println("（diff 基线来自相同语料、评测集及实际题数的 tag='campus-baseline' 历史 run）");
         } else {
-            System.out.println("（未找到相同语料指纹的校园基线，before 列为空。冻结基线：-Deval.tag=campus-baseline）");
+            System.out.println("（未找到相同语料、评测集及实际题数的校园基线，before 列为空。冻结基线：-Deval.tag=campus-baseline）");
         }
     }
 
@@ -498,10 +500,12 @@ class GenerationEvalTest {
             String raw = db.sql("SELECT metrics::text FROM eval_run WHERE tag = 'campus-baseline' "
                             + "AND config->>'dataset'=:dataset AND config->>'corpusFingerprint'=:fingerprint "
                             + "AND config->>'datasetFingerprint'=:datasetFingerprint "
+                            + "AND config->>'sampleCount'=:sampleCount "
                             + "AND metrics IS NOT NULL AND id < :beforeRunId ORDER BY id DESC LIMIT 1")
                     .param("dataset", EVAL_SET)
                     .param("fingerprint", corpusFingerprint())
                     .param("datasetFingerprint", datasetFingerprint())
+                    .param("sampleCount", String.valueOf(evaluatedSampleCount))
                     .param("beforeRunId", beforeRunId)
                     .query(String.class)
                     .optional()
@@ -563,6 +567,7 @@ class GenerationEvalTest {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("dataset", EVAL_SET);
         m.put("datasetFingerprint", datasetFingerprint());
+        m.put("sampleCount", evaluatedSampleCount);
         m.put("corpusFingerprint", corpusFingerprint());
         m.put("embeddingModel", props.getEmbeddingModel());
         m.put("chatModel", props.getChatModel());
