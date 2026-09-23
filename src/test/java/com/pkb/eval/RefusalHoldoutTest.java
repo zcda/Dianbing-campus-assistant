@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RefusalHoldoutTest {
     private static final List<String> DATASETS = List.of(
             "/eval/campus_refusal_holdout_v1.jsonl", "/eval/campus_refusal_holdout_v2.jsonl",
-            "/eval/campus_refusal_near_neighbor_v1.jsonl");
+            "/eval/campus_refusal_near_neighbor_v1.jsonl", "/eval/campus_refusal_unseen_v3.jsonl");
 
     @Autowired private JdbcClient db;
     @Autowired private EmbeddingClient embeddingClient;
@@ -41,7 +41,7 @@ class RefusalHoldoutTest {
         List<Holdout> holdouts = new ArrayList<>();
         for (String dataset : DATASETS) {
             List<Holdout> loaded = load(dataset);
-            assertEquals(dataset.contains("near_neighbor") ? 8 : 12, loaded.size(),
+            assertEquals(dataset.contains("near_neighbor") || dataset.contains("unseen_v3") ? 8 : 12, loaded.size(),
                     dataset + " 题数变化需人工复核分母");
             holdouts.addAll(loaded);
         }
