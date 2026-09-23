@@ -1,0 +1,50 @@
+{
+  "student": {"id": "DEMO-001", "name": "演示学生", "major": "计算机技术", "cohort": 2025},
+  "courses": [
+    {"code": "CS501", "name": "高级算法", "credits": 3, "category": "专业课", "semester": "2025-秋", "teacher": "王老师", "description": "算法设计与复杂度分析", "prerequisites": []},
+    {"code": "CS502", "name": "机器学习", "credits": 3, "category": "专业课", "semester": "2025-秋", "teacher": "李老师", "description": "监督学习与模型评估", "prerequisites": []},
+    {"code": "GE501", "name": "学术英语", "credits": 2, "category": "公共课", "semester": "2025-秋", "teacher": "赵老师", "description": "学术阅读与写作", "prerequisites": []},
+    {"code": "CS503", "name": "数据库系统", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "陈老师", "description": "数据库设计与事务处理", "prerequisites": []},
+    {"code": "CS504", "name": "分布式系统", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "刘老师", "description": "一致性协议与分布式存储", "prerequisites": ["CS501"]},
+    {"code": "CS505", "name": "安全软件工程", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "周老师", "description": "安全设计与测试", "prerequisites": ["CS503"]},
+    {"code": "CS506", "name": "软件测试", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "孙老师", "description": "测试设计与质量保证", "prerequisites": ["CS501"]}
+  ],
+  "grades": [
+    {"courseCode": "CS501", "semester": "2025-秋", "score": 91, "status": "已通过"},
+    {"courseCode": "CS502", "semester": "2025-秋", "score": 84, "status": "已通过"},
+    {"courseCode": "GE501", "semester": "2025-秋", "score": 88, "status": "已通过"}
+  ],
+  "schedule": [
+    {"courseCode": "CS503", "semester": "2026-秋", "weekday": 4, "startSection": 1, "endSection": 2, "room": "A103"},
+    {"courseCode": "CS504", "semester": "2026-秋", "weekday": 2, "startSection": 3, "endSection": 4, "room": "B202"}
+  ],
+  "creditRequirements": [
+    {"category": "专业课", "requiredCredits": 12},
+    {"category": "公共课", "requiredCredits": 2}
+  ],
+  "exams": [
+    {"courseCode": "CS503", "semester": "2026-秋", "date": "2026-12-18", "startTime": "09:00", "endTime": "11:00", "room": "考场 C301"},
+    {"courseCode": "CS504", "semester": "2026-秋", "date": "2026-12-21", "startTime": "14:00", "endTime": "16:00", "room": "考场 C302"}
+  ],
+  "classrooms": [
+    {"code": "A103", "building": "A楼", "capacity": 60},
+    {"code": "A104", "building": "A楼", "capacity": 40},
+    {"code": "B202", "building": "B楼", "capacity": 80},
+    {"code": "B203", "building": "B楼", "capacity": 32}
+  ],
+  "roomBookings": [
+    {"roomCode": "A103", "semester": "2026-秋", "weekday": 4, "startSection": 1, "endSection": 2, "courseCode": "CS503"},
+    {"roomCode": "B202", "semester": "2026-秋", "weekday": 2, "startSection": 3, "endSection": 4, "courseCode": "CS504"},
+    {"roomCode": "A104", "semester": "2026-秋", "weekday": 2, "startSection": 2, "endSection": 3, "courseCode": "EXT001"},
+    {"roomCode": "A104", "semester": "2026-秋", "weekday": 1, "startSection": 3, "endSection": 4, "courseCode": "CS506"},
+    {"roomCode": "B203", "semester": "2026-秋", "weekday": 2, "startSection": 5, "endSection": 6, "courseCode": "CS505"}
+  ],
+  "courseOfferings": [
+    {"courseCode": "CS505", "semester": "2026-秋", "capacity": 32, "enrolled": 20, "meetings": [
+      {"weekday": 2, "startSection": 5, "endSection": 6, "room": "B203"}
+    ]},
+    {"courseCode": "CS506", "semester": "2026-秋", "capacity": 40, "enrolled": 25, "meetings": [
+      {"weekday": 1, "startSection": 3, "endSection": 4, "room": "A104"}
+    ]}
+  ]
+}

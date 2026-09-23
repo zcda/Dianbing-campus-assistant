@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>电兵助手 · 校园服务演示</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f4f7f7;color:#17312d;font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}
+    header{background:#113a33;color:white;padding:24px max(24px,calc((100vw - 1080px)/2))}header a{color:#b7efcf}
+    header h1{margin:8px 0 4px;font-size:26px}header p{margin:0;color:#cfe0dc}
+    main{max-width:1080px;margin:28px auto;padding:0 20px 36px}.notice{background:#fff3d7;border-left:4px solid #e0a400;padding:12px 16px;border-radius:7px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:22px}
+    section{background:white;border:1px solid #d9e5e1;border-radius:12px;padding:20px;box-shadow:0 4px 18px #17312d0a}
+    h2{font-size:18px;margin:0 0 12px}.meta{color:#53706a;font-size:13px}table{border-collapse:collapse;width:100%;font-size:14px}
+    th,td{padding:9px 5px;border-bottom:1px solid #e7efec;text-align:left}th{color:#53706a;font-weight:600}code{background:#edf3f1;padding:2px 5px;border-radius:4px}
+    #error{color:#b42318}.small{font-size:12px;color:#53706a}
+  </style>
+</head>
+<body>
+  <header><a href="/">← 返回统一问答</a><h1>校园服务 · Mock 演示</h1><p>课程、课表、成绩与考试共用同一个领域服务；MCP Tool 通过 /mcp 暴露。</p></header>
+  <main>
+    <div class="notice"><strong>演示数据</strong>：所有姓名、课程和成绩均为虚构，固定为同一名演示学生；当前没有学生登录或真实教务系统接入。</div>
+    <p id="error"></p>
+    <div class="grid">
+      <section><h2>演示学生</h2><div id="student" class="meta">加载中…</div></section>
+      <section><h2>工具能力</h2><p><code>search_courses</code> · <code>get_course_detail</code><br><code>get_my_grades</code> · <code>get_my_schedule</code><br><code>get_my_exams</code> · <code>calculate_my_credit_gap</code><br><code>recommend_courses</code> · <code>find_free_classrooms</code></p><p class="small">只读 Streamable HTTP MCP，个人工具只读取固定演示身份，不接收 studentId。</p></section>
+      <section><h2>Mock 学分缺口</h2><div id="creditGap" class="meta">加载中…</div><p class="small">依据虚构培养要求确定性计算；不是毕业资格审核。</p></section>
+      <section><h2>Mock 选课建议</h2><div id="recommendations" class="meta">加载中…</div><p class="small">依据虚构先修条件、剩余名额及课表节次计算；真实选课状态未接入。</p></section>
+      <section><h2>课程目录</h2><table><thead><tr><th>课程</th><th>学分</th><th>类别</th></tr></thead><tbody id="courses"></tbody></table></section>
+      <section><h2>我的成绩</h2><table><thead><tr><th>课程</th><th>成绩</th><th>状态</th></tr></thead><tbody id="grades"></tbody></table></section>
+      <section><h2>我的课表</h2><table><thead><tr><th>星期 / 节次</th><th>课程</th><th>教室</th></tr></thead><tbody id="schedule"></tbody></table></section>
+      <section><h2>考试安排</h2><table><thead><tr><th>日期 / 时间</th><th>课程</th><th>考场</th></tr></thead><tbody id="exams"></tbody></table></section>
+      <section><h2>空教室示例</h2><p class="meta">2026-秋 · 周二第 3–4 节</p><div id="freeClassrooms" class="meta">加载中…</div><p class="small">根据虚构的整校每周排课表推算，不代表实时占用或可预约状态。</p></section>
+    </div>
+  </main>
+  <script>
+    function cell(row, value){const td=document.createElement('td');td.textContent=value;row.appendChild(td)}
+    function rows(id, data, values){const body=document.getElementById(id);for(const item of data){const tr=document.createElement('tr');for(const value of values(item))cell(tr,value);body.appendChild(tr)}}
+    fetch('/api/campus/demo').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+      document.getElementById('student').textContent=`${d.student.name} · ${d.student.major} · ${d.student.cohort}级（${d.student.id}）`;
+      document.getElementById('creditGap').textContent=`要求 ${d.creditGap.requiredCredits} 学分 · 已通过 ${d.creditGap.earnedCredits} 学分 · 尚缺 ${d.creditGap.missingCredits} 学分（按类别计算）`;
+      const plan=d.recommendationPlan;
+      document.getElementById('recommendations').textContent=`${plan.semester} · 已排课 ${plan.plannedCredits} 学分 · 假设全部通过后还缺 ${plan.projectedMissingCredits} 学分。候选：${plan.candidates.map(c=>`${c.courseCode} ${c.courseName}`).join('、') || '暂无'}。未推荐：${plan.decisions.filter(d=>!d.eligible).map(d=>`${d.courseCode}（${d.reason}）`).join('、') || '无'}`;
+      rows('courses',d.courses,c=>[`${c.code} ${c.name}`,c.credits,c.category]);
+      rows('grades',d.grades,g=>[`${g.courseCode} ${g.courseName}`,g.score,g.status]);
+      rows('schedule',d.schedule,m=>[`周${m.weekday} · ${m.startSection}-${m.endSection}节`,m.courseName,m.room]);
+      rows('exams',d.exams,e=>[`${e.date} ${e.startTime}-${e.endTime}`,e.courseName,e.room]);
+      document.getElementById('freeClassrooms').textContent=d.freeClassroomsExample.map(r=>`${r.code}（${r.building}，${r.capacity}座）`).join('、') || '没有符合条件的模拟空教室';
+    }).catch(e=>document.getElementById('error').textContent='加载失败：'+e.message);
+  </script>
+</body>
+</html>

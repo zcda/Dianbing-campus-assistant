@@ -1,5 +1,7 @@
 package com.pkb.eval;
 
+import com.pkb.testinfra.RequiresPostgres;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pkb.config.RagProperties;
 import com.pkb.conversation.Conversation;
@@ -45,6 +47,7 @@ import java.util.HexFormat;
  * 报告打印到控制台并写入 target/eval-reports/&lt;tag&gt;.md；若存在同语料指纹的 campus-baseline 历史 run，自动输出 diff 表。
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@RequiresPostgres
 class GenerationEvalTest {
 
     private static final String EVAL_SET = System.getProperty("eval.dataset", "/eval/campus_eval_v1.jsonl");

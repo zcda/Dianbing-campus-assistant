@@ -1,5 +1,7 @@
 package com.pkb.conversation;
 
+import com.pkb.testinfra.RequiresPostgres;
+
 import com.pkb.search.Source;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({ConversationRepository.class, ConversationRepositorySqlTest.TestConfig.class})
+@RequiresPostgres
 class ConversationRepositorySqlTest {
 
     @Configuration

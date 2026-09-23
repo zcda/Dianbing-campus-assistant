@@ -2,6 +2,8 @@
 
 电兵助手计划建设为基于 RAG 与 MCP 的高校校园智能助手。当前版本首先实现校园规则知识库：导入学校官方规则和培养方案，经过人工核对后进行检索问答，并展示文件、条款或分块及官方链接。当前是**本地演示版**，默认只监听 `127.0.0.1`。
 
+面试演示路径、指标证据和下一阶段验收条件见 [秋招项目展示与后续验收](doc/秋招项目展示与后续验收.md)。
+
 ## 当前项目状态
 
 当前已完成的是校园规则 RAG 基础框架，主要支持：
@@ -17,7 +19,9 @@
 - 会话保存、检索调试和评测数据记录；
 - 针对培养方案的适用年份、身份、校区和历史版本隔离。
 
-成绩查询、课表查询、课程查询、考试安排、MCP Server、学生登录和真实教务系统接入目前尚未完成，详见[后续计划](#后续计划与未完成事项)。
+课程、课表、成绩、考试和选课建议已提供**虚构学生 Mock 演示**及只读 MCP Tool，访问 [/campus.html](http://localhost:8080/campus.html) 可查看同一份数据。首页聊天框还可直接提问“我的成绩是多少？”“我的课表周二有什么课？”“我的考试安排是什么？”“我还差多少学分？”“我推荐选什么课？”，这些明确的个人数据问题由 `CampusQuestionRouter` 走领域服务确定性回答，不调用 LLM。学生登录和真实教务系统接入尚未完成，详见[后续计划](#后续计划与未完成事项)。
+
+问“我的成绩是否满足软件工程学硕毕业学分要求？”时，统一入口会分开呈现**虚构学业数据**和**检索到的官方规则依据**。规则说明可带引用，但系统不会用 Mock 数据判断真实毕业资格；规则检索没有证据时直接说明缺失。模型提示词只接收规则问题和检索片段，不接收演示学生的成绩明细或相关历史消息。
 
 ## 当前框架结构
 
@@ -33,6 +37,8 @@
 │   ├── rewrite/      查询改写、术语映射和子问题拆分
 │   ├── llm/          对话模型、Embedding 模型和向量编解码
 │   ├── rag/          RAG 编排、流式问答、引用校验和调试接口
+│   ├── campus/       校园领域服务与可替换数据提供者（当前为 Mock）
+│   ├── mcp/          官方 Java SDK 的只读 Streamable HTTP 工具
 │   └── conversation/ 会话和聊天消息持久化
 ├── src/main/resources
 │   ├── static/       Vue 单页前端
@@ -54,15 +60,16 @@
 ChatController
   ↓
 RagService
-  ├─ 查询改写与子问题拆分
-  ├─ Embedding
-  ├─ 关键词检索 + 向量检索
-  ├─ RRF 融合、去重和证据闸门
-  ├─ 规则范围校验
-  ├─ Prompt 组装
-  └─ LLM 流式回答
-          ↓
-      引用校验 + SSE 返回
+  ├─ 明确的个人数据问题 → CampusQuestionRouter → CampusService → Mock 回答（零 LLM）
+  ├─ 个人数据 + 学校规则问题 → Mock 数据摘要 + RAG 规则证据（分区展示，不作资格判定）
+  └─ 校园规则问题
+     ├─ 查询改写与子问题拆分
+     ├─ Embedding
+     ├─ 关键词检索 + 向量检索
+     ├─ RRF 融合、去重和证据闸门
+     ├─ 规则范围校验
+     ├─ Prompt 组装
+     └─ LLM 流式回答 → 引用校验 + SSE 返回
 ```
 
 规则文档的处理流程为：
@@ -98,21 +105,22 @@ PostgreSQL / pgvector / tsvector
 
 ### 校园业务能力
 
-- [ ] 课程目录结构化和课程查询；
-- [ ] 课表数据模型与课表查询；
-- [ ] 学生成绩数据模型与成绩查询；
-- [ ] 考试安排查询；
-- [ ] 空闲教室查询；
+- [x] Mock 课程目录结构化和课程查询；
+- [x] Mock 课表数据模型与课表查询；
+- [x] Mock 学生成绩数据模型与成绩查询；
+- [x] 同一会话中的 Mock 个人问答历史不送入公开校规 RAG 的查询改写器或生成 Prompt；
+- [x] Mock 考试安排查询；[ ] 真实考试安排接入；
+- [x] 基于虚构整校周课表的空闲教室查询（按学期、星期、节次区间、教学楼和容量过滤）；[ ] 真实教室实时占用与预约状态接入；
 - [ ] 培养方案课程表结构化；
-- [ ] 学分缺口计算；
-- [ ] 基于先修条件、开课学期和培养要求的课程推荐。
+- [x] Mock 培养要求的确定性学分缺口计算；[ ] 从真实培养方案结构化并人工校对后计算；
+- [x] 基于 Mock 先修条件、开课学期、已排课、虚构培养要求、剩余名额和节次冲突的可解释课程候选；[ ] 真实规则引用与真实选课容量/冲突校验。
 
 ### MCP 与系统集成
 
-- [ ] 增加 MCP Server；
-- [ ] 暴露 `get_my_grades`、`get_my_schedule`、`search_courses`、`get_course_detail` 等只读工具；
-- [ ] 增加统一的 `campus` 领域服务层，避免 MCP Tool 直接操作 SQL；
-- [ ] 先支持 Mock 数据或文件导入，再适配真实教务系统；
+- [x] 增加本机只读 MCP Server；
+- [x] 暴露 `get_my_grades`、`get_my_schedule`、`get_my_exams`、`search_courses`、`get_course_detail`、`calculate_my_credit_gap`、`recommend_courses`、`find_free_classrooms`；
+- [x] 增加统一的 `campus` 领域服务层，MCP Tool 不操作 SQL；
+- [x] 先支持 Mock 数据；[ ] 成绩单/课表文件导入与真实教务系统适配；
 - [ ] 后续评估拆分独立的 `academic-mcp-server` 服务。
 
 ### 安全与可用性
@@ -140,7 +148,29 @@ PostgreSQL / pgvector / tsvector
 
 在接入真实学生数据前，先使用 Mock 数据或成绩单/课程表文件验证工具协议、领域逻辑和交互闭环。
 
+## 校园服务 Mock 与 MCP 演示
+
+启动应用后打开 <http://localhost:8080/campus.html>。演示数据在 [mock-campus.json](src/main/resources/campus/mock-campus.json)，固定为虚构学生 `DEMO-001`：2025 年秋季已修课程，2026 年秋季在修课程与未来考试，时间线一致。另有独立的虚构整校教室占用表，不能用个人课表推断教室是否空闲。预览接口为 `GET /api/campus/demo`。八个 MCP Tool 通过官方 Java SDK 的 Streamable HTTP `/mcp` 暴露，和预览页共用 `CampusService`。`get_my_*` 无 `studentId` 参数；额外参数会被拒绝。当前仅绑定 `127.0.0.1`，尚未做真实身份认证，因此不得用于真实成绩和考试安排。
+
+可用标准 MCP 客户端连接 `http://127.0.0.1:8080/mcp`。也可运行无数据库、无 Ollama 的协议集成测试，覆盖初始化、工具发现、模拟成绩查询、学分计算与非法参数：
+
+```powershell
+.\mvnw.cmd '-Dtest=CampusServiceTest,CampusMcpHttpTest,RetrievalAggregationTest' test
+```
+
+查询样例：`get_my_grades` 传 `{ "semester": "2025-秋" }`；`get_my_schedule` 传 `{ "semester": "2026-秋", "weekday": 2 }`；`get_my_exams` 传 `{ "semester": "2026-秋" }`；`search_courses` 传 `{ "query": "机器" }`；`get_course_detail` 传 `{ "courseCode": "CS502" }`；`calculate_my_credit_gap` 传 `{}`；`recommend_courses` 传 `{ "semester": "2026-秋" }`；`find_free_classrooms` 传 `{ "semester": "2026-秋", "weekday": 2, "startSection": 3, "endSection": 4 }`。工具结果包含 `dataSource: fictional-mock`，不代表真实教务记录或毕业资格。空教室只按虚构周课表推算整段节次是否无占用，不代表实时状态；Mock 学分缺口只计入已通过课程；推荐会检查虚构先修课、剩余名额和课表节次，返回候选与未推荐原因，但尚未验证真实开课和官方培养要求。
+
 ## 快速启动
+
+### 只演示 Mock 校园服务（无需 Docker/Ollama）
+
+```powershell
+.\mvnw.cmd '-Dspring-boot.run.main-class=com.pkb.demo.CampusDemoApplication' spring-boot:run
+```
+
+打开 <http://127.0.0.1:8080/campus.html>；`/api/campus/demo` 与 `/mcp` 同时可用。此入口只加载虚构校园服务，不提供 RAG 对话或规则管理接口，便于无数据库的秋招现场演示。
+
+### 完整 RAG + 校园助手
 
 需要 JDK 17+、Docker 和 Ollama。先准备中文对话模型与向量模型：
 
@@ -182,6 +212,10 @@ v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2
 ```
 
 检索和生成评测需要 PostgreSQL、已完成的有效规则索引，以及 Ollama。缺少当前有效的金标准证据时，测试会跳过并说明原因，不能把跳过当作通过。生成评测输出到 `target/eval-reports/`。现有 120 条 Java 技术问答在 `eval_set_v2.jsonl` 中保留为历史数据，**不用于证明杏规质量**。
+
+`mvn test` 在 PostgreSQL 未启动时会提前跳过 5 个依赖数据库的 SQL/评测测试；其余单元、语料与 Mock MCP HTTP 测试仍执行。GitHub Actions 运行此基础测试集。完整 RAG 检索与生成指标仍须启动 PostgreSQL、导入有效语料和模型服务后按上面的命令单独运行，不应把 CI 绿色误读为在线评测通过。
+
+课程表 PDF 中，表格末行可能与后面的选课说明粘连。规则切块现在会在这类边界拆出带专业标题的短说明块；真实 PDF 离线测试覆盖 C128 依据句。修改切块规则后需重建索引，再运行在线评测确认召回变化。
 
 现有自动指标包括 Hit@K、Recall@K、MRR、误拒/过召回、来源日期与适用范围匹配、角标可映射率、TTFT，以及独立模型 Judge 的答案评分。角标可映射率只能说明引用编号存在，不能说明引用真正支撑结论；对事实完整性、引用支撑和规则冲突还需人工复核。详见 [使用与评测说明](doc/杏规-使用与评测.md)。
 

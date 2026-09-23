@@ -157,8 +157,11 @@ public class RetrievalEngine implements InitializingBean {
     private RetrievalOutcome aggregate(List<SubResult> subResults, long elapsedNanos) {
         Map<String, Merged> merged = new LinkedHashMap<>();
         for (SubResult sub : subResults) {
+            java.util.Set<String> seenInSubQuery = new java.util.HashSet<>();
             for (RetrievedChunk chunk : sub.candidates()) {
-                merged.computeIfAbsent(chunk.ref(), r -> new Merged(chunk)).subQueryHits++;
+                Merged item = merged.computeIfAbsent(chunk.ref(), r -> new Merged(chunk));
+                if (seenInSubQuery.add(chunk.ref())) item.subQueryHits++;
+                if (chunk.bestScore() > item.chunk.bestScore()) item.chunk = chunk;
             }
         }
         List<Merged> sorted = new ArrayList<>(merged.values());
@@ -264,7 +267,7 @@ public class RetrievalEngine implements InitializingBean {
     }
 
     private static final class Merged {
-        final RetrievedChunk chunk;
+        RetrievedChunk chunk;
         int subQueryHits;
 
         Merged(RetrievedChunk chunk) {

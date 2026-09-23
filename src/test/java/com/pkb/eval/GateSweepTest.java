@@ -1,5 +1,7 @@
 package com.pkb.eval;
 
+import com.pkb.testinfra.RequiresPostgres;
+
 import com.pkb.config.RagProperties;
 import com.pkb.llm.EmbeddingClient;
 import com.pkb.search.RetrievalEngine;
@@ -35,6 +37,7 @@ import java.util.Set;
  * 每个问题只向量化一次，所有档位复用同一个向量。跑完恢复原配置，不污染同 JVM 内的其他评测。
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@RequiresPostgres
 class GateSweepTest {
 
     private static final String EVAL_SET = System.getProperty("eval.dataset", "/eval/campus_eval_v1.jsonl");

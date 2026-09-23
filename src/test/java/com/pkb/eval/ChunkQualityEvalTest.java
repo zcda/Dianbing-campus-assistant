@@ -54,6 +54,10 @@ class ChunkQualityEvalTest {
                         if (chunk.contains(evidence.contains())) {
                             found = true;
                             if (chunk.contains(evidence.context())) foundWithContext = true;
+                            if ("C128".equals(sample.queryId())) {
+                                assertTrue(chunk.length() < 600,
+                                        "C128 选课因素仍被埋在长课程表中：" + chunk.length());
+                            }
                         }
                     }
                     if (found) sameChunk++;

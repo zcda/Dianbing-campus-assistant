@@ -1,6 +1,7 @@
 package com.pkb.rag;
 
 import com.pkb.config.RagProperties;
+import com.pkb.campus.CampusQuestionRouter;
 import com.pkb.conversation.ChatMessage;
 import com.pkb.conversation.ConversationService;
 import com.pkb.llm.ChatClient;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,11 +61,13 @@ public class RagService {
     private final TermMapper termMapper;
     private final RagProperties props;
     private final Executor executor;
+    private final CampusQuestionRouter campusQuestions;
 
     public RagService(EmbeddingClient embeddingClient, ChatClient chatClient,
                       RetrievalEngine retrievalEngine, ConversationService conversations,
                       QueryRewriter queryRewriter, TermMapper termMapper,
-                      RagProperties props, @Qualifier("chatExecutor") Executor executor) {
+                      RagProperties props, @Qualifier("chatExecutor") Executor executor,
+                      CampusQuestionRouter campusQuestions) {
         this.embeddingClient = embeddingClient;
         this.chatClient = chatClient;
         this.retrievalEngine = retrievalEngine;
@@ -72,6 +76,7 @@ public class RagService {
         this.termMapper = termMapper;
         this.props = props;
         this.executor = executor;
+        this.campusQuestions = campusQuestions;
     }
 
     /** 事件出口抽象：SSE 与评测录制共用同一条问答链路 */
@@ -120,38 +125,79 @@ public class RagService {
         List<ChatMessage> history = conversations.rewriteHistory(conversationId);
         conversations.appendUserMessage(conversationId, question);
 
+        // 明确的个人数据问题由确定性领域服务回答，避免把 Mock 成绩送进 RAG 或 LLM。
+        var campusAnswer = campusQuestions.answer(question);
+        if (campusAnswer.isPresent() && !campusAnswer.get().needsRuleEvidence()) {
+            var answer = campusAnswer.get();
+            Map<String, Object> meta = new LinkedHashMap<>();
+            meta.put("traceId", traceId);
+            meta.put("route", answer.route());
+            meta.put("dataSource", "fictional-mock");
+            meta.put("llmCalls", 0);
+            sink.emit("meta", meta);
+            sink.emit("delta", Map.of("text", answer.text()));
+            persistAnswer(conversationId, answer.text(), List.of());
+            t.totalMs = System.currentTimeMillis() - t0;
+            sink.emit("done", done("campus_mock", traceId, 0, null, t));
+            return new ChatOutcome(traceId, "campus_mock", answer.text(), List.of(),
+                    meta, 0, null, t.snapshot());
+        }
+
+        boolean mixedCampusRule = campusAnswer.isPresent() && campusAnswer.get().needsRuleEvidence();
+        String retrievalQuestion = mixedCampusRule ? campusAnswer.get().ruleQuery() : question;
+        List<ChatMessage> promptHistory = mixedCampusRule ? List.of() : publicRuleHistory(history);
+
         // ① 归一 → ② 改写拆分（与主问句向量化并行）→ ③ 子问题向量
-        PreparedQuery prepared = prepare(question, history);
+        PreparedQuery prepared = prepare(retrievalQuestion, promptHistory);
         t.rewriteMs = prepared.rewriteMs();
         t.embedMs = prepared.embedMs();
 
         // ④⑤ 双通道并行召回 + 后置链 + 批级闸门（子问题并行，各自独立扩池）
-        RetrievalOutcome outcome = retrievalEngine.retrieve(prepared.subQueries(), prepared.vectors(), question);
+        RetrievalOutcome outcome = retrievalEngine.retrieve(prepared.subQueries(), prepared.vectors(), retrievalQuestion);
         t.retrieveMs = outcome.elapsedMs();
         t.gateMs = outcome.gateMs();
 
         // meta 首个事件（只增不改：旧前端忽略未知事件名）
         Map<String, Object> meta = meta(traceId, prepared, outcome, t);
+        if (mixedCampusRule) {
+            meta.put("route", "campus_rule_mix_mock");
+            meta.put("dataSource", "fictional-mock");
+        }
         sink.emit("meta", meta);
 
         // ⑦ 护栏/闸门拒答：由检索侧决定是否调 LLM，不依赖模型自觉（D8 核心原则）
         if (outcome.sources().isEmpty()) {
             String notFound = props.getNotFoundAnswer();
-            sink.emit("delta", Map.of("text", notFound));
-            persistAnswer(conversationId, notFound, List.of());
+            String response = mixedCampusRule
+                    ? campusAnswer.get().text() + "\n\n**学校规则依据**：" + notFound
+                    : notFound;
+            sink.emit("delta", Map.of("text", response));
+            persistAnswer(conversationId, response, List.of());
             t.totalMs = System.currentTimeMillis() - t0;
-            sink.emit("done", done("no_sources", traceId, 0, null, t));
+            String reason = mixedCampusRule ? "campus_rule_no_sources" : "no_sources";
+            sink.emit("done", done(reason, traceId, 0, null, t));
             summaryLog(traceId, conversationId, question, prepared, outcome, 0, t, null);
-            return new ChatOutcome(traceId, "no_sources", notFound, List.of(), meta, 0, null, t.snapshot());
+            return new ChatOutcome(traceId, reason, response, List.of(), meta, 0, null, t.snapshot());
         }
 
         sink.emit("sources", outcome.sources());
 
         // ⑧⑨ LLM 流式生成 + 首字计时 + 生成后角标埋点（F3 的解药：漏打角标可度量）
-        StringBuilder answer = new StringBuilder();
+        String prefix = mixedCampusRule
+                ? campusAnswer.get().text() + "\n\n**学校规则依据（仅说明规则，不判断个人是否达标）**\n\n"
+                : "";
+        StringBuilder answer = new StringBuilder(prefix);
+        if (mixedCampusRule) sink.emit("delta", Map.of("text", prefix));
         long[] firstTokenAt = {-1};
         CitationCheck.Result[] citations = {null};
-        chatClient.stream(systemPrompt(), buildUserPrompt(question, outcome.sources(), history),
+        String prompt = mixedCampusRule
+                ? buildUserPrompt("只说明以下问题涉及的学校规则及适用范围，不根据个人成绩判断是否达标："
+                        + retrievalQuestion, outcome.sources(), List.of())
+                : buildUserPrompt(question, outcome.sources(), promptHistory);
+        String instructions = mixedCampusRule
+                ? systemPrompt() + "\n本次只说明学校规则，不推断任何个人成绩、学分或毕业资格。"
+                : systemPrompt();
+        chatClient.stream(instructions, prompt,
                 new ChatClient.Listener() {
                     @Override
                     public void onDelta(String text) {
@@ -168,15 +214,19 @@ public class RagService {
                         t.totalMs = System.currentTimeMillis() - t0;
                         citations[0] = CitationCheck.check(answer.toString(), outcome.sources().size());
                         persistAnswer(conversationId, answer.toString(), outcome.sources());
-                        sink.emit("done", done("ok", traceId, 1, citations[0], t));
+                        sink.emit("done", done(mixedCampusRule ? "campus_rule_mix" : "ok",
+                                traceId, 1, citations[0], t));
                         summaryLog(traceId, conversationId, question, prepared, outcome, 1, t, citations[0]);
                     }
                 });
-        return new ChatOutcome(traceId, "ok", answer.toString(), outcome.sources(), meta, 1, citations[0], t.snapshot());
+        return new ChatOutcome(traceId, mixedCampusRule ? "campus_rule_mix" : "ok",
+                answer.toString(), outcome.sources(), meta, 1, citations[0], t.snapshot());
     }
 
     /** ①②③：归一 → 改写（与主问句向量化并行发起，避免串行叠加首字延迟）→ 子问题向量 */
     public PreparedQuery prepare(String question, List<ChatMessage> history) {
+        // /api/debug/retrieval 也调用此入口，不能绕过个人数据历史隔离。
+        List<ChatMessage> safeHistory = publicRuleHistory(history);
         // ① 问句归一（词表映射，纯规则零 token；默认关闭时原样返回）
         String normalized = termMapper.normalize(question).strip();
 
@@ -186,7 +236,7 @@ public class RagService {
                 () -> embeddingClient.embed(normalized), executor);
         QueryRewriter.Result rewrite;
         if (props.getRewrite().isEnabled()) {
-            rewrite = queryRewriter.rewrite(normalized, historyLines(history));
+            rewrite = queryRewriter.rewrite(normalized, historyLines(safeHistory));
         } else {
             rewrite = new QueryRewriter.Result(normalized, List.of(normalized), false);
         }
@@ -270,6 +320,29 @@ public class RagService {
         return history.stream()
                 .map(m -> ("user".equals(m.role()) ? "用户：" : "助手：") + abbreviate(m.content()))
                 .toList();
+    }
+
+    /** 同一会话中的校园 Mock 问答不进入公开校规 RAG 的改写器或生成 Prompt。 */
+    private List<ChatMessage> publicRuleHistory(List<ChatMessage> history) {
+        if (history == null || history.isEmpty()) return List.of();
+        List<ChatMessage> safe = new ArrayList<>();
+        boolean precedingCampusQuestion = false;
+        for (ChatMessage message : history) {
+            if ("user".equals(message.role())) {
+                precedingCampusQuestion = campusQuestions.answer(message.content()).isPresent();
+                if (!precedingCampusQuestion) safe.add(message);
+            } else if ("assistant".equals(message.role())) {
+                // 兼容已落库、没有结构化路由标签的旧对话，含 Mock 标识的孤立回复也排除。
+                if (!precedingCampusQuestion && !isMockReply(message.content())) safe.add(message);
+                precedingCampusQuestion = false;
+            }
+        }
+        return safe;
+    }
+
+    private boolean isMockReply(String content) {
+        return content.contains("**Mock ") || content.contains("**虚构学生的模拟学业数据**")
+                || content.contains("以上均为虚构数据") || content.contains("以上为虚构安排");
     }
 
     private String abbreviate(String content) {

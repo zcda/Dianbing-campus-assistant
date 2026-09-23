@@ -1,5 +1,7 @@
 package com.pkb.eval;
 
+import com.pkb.testinfra.RequiresPostgres;
+
 import com.pkb.config.RagProperties;
 import com.pkb.llm.EmbeddingClient;
 import com.pkb.search.RetrievalEngine;
@@ -27,6 +29,7 @@ import java.util.Set;
  * 不把「环境没起来」误报成「检索质量下降」。
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@RequiresPostgres
 class RetrievalEvalTest {
 
     private static final String EVAL_SET = System.getProperty("eval.dataset", "/eval/campus_eval_v1.jsonl");

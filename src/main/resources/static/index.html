@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>杏规 · 校园规则查看助手</title>
+<title>电兵助手 · 校园智能助手演示</title>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.38/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
@@ -112,7 +112,8 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
 <body>
 <div id="app">
   <header>
-    <h1>杏规 · 校园规则查看助手</h1>
+    <h1>电兵助手 · 校园智能助手演示</h1>
+    <a href="/campus.html" style="color:#00a763;font-size:13px;margin-left:auto">校园服务 Mock 演示 →</a>
     <span v-if="!hasApiKey" class="warn">模型服务未配置，规则可保存，问答暂不可用。</span>
   </header>
   <main>
@@ -249,7 +250,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
         </template>
       </div>
       <div class="ask-bar" v-if="activeConversation">
-        <input v-model="activeConversation.draft" placeholder="请输入想查询的校园规则，回车提问" @keydown.enter.prevent="ask"
+        <input v-model="activeConversation.draft" placeholder="可问校园规则，或问我的模拟成绩、课表、学分缺口" @keydown.enter.prevent="ask"
                :disabled="activeConversation.asking"/>
         <button class="primary" @click="ask"
                 :disabled="activeConversation.asking || !(activeConversation.draft || '').trim()">
@@ -293,7 +294,34 @@ createApp({
     const chatBox = ref(null);
 
     marked.setOptions({ breaks: true, gfm: true });
-    const render = (text) => text ? marked.parse(text) : '';
+    const safeHref = raw => {
+      try {
+        const url = new URL(raw, window.location.origin);
+        if (url.origin === window.location.origin && raw.startsWith('/')) return url.pathname + url.search + url.hash;
+        if (url.protocol === 'https:' && (url.hostname === 'uestc.edu.cn' || url.hostname.endsWith('.uestc.edu.cn'))) return url.href;
+      } catch (_) { /* invalid URL */ }
+      return null;
+    };
+    const allowedMarkdownTags = new Set(['P', 'BR', 'STRONG', 'EM', 'CODE', 'PRE', 'UL', 'OL', 'LI',
+      'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'A', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'HR']);
+    const render = text => {
+      if (!text) return '';
+      // 规则正文和模型输出均视为不可信文本；只保留安全的 Markdown 结构与链接。
+      const escaped = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const template = document.createElement('template');
+      template.innerHTML = marked.parse(escaped);
+      for (const node of [...template.content.querySelectorAll('*')]) {
+        if (!allowedMarkdownTags.has(node.tagName)) {
+          node.replaceWith(document.createTextNode(node.textContent));
+          continue;
+        }
+        const href = node.tagName === 'A' ? safeHref(node.getAttribute('href') || '') : null;
+        for (const attr of [...node.attributes]) node.removeAttribute(attr.name);
+        if (href) node.setAttribute('href', href);
+        else if (node.tagName === 'A') node.replaceWith(document.createTextNode(node.textContent));
+      }
+      return template.innerHTML;
+    };
 
     async function readError(res) {
       const text = await res.text();

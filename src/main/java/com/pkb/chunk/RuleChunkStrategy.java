@@ -13,6 +13,9 @@ public class RuleChunkStrategy implements ChunkStrategy {
     private static final Pattern CHAPTER = Pattern.compile("^第[一二三四五六七八九十百千零〇0-9]+[章节]");
     private static final Pattern PROGRAM = Pattern.compile("^[\\p{IsHan}·（）()]{2,25} 全日制学术硕士培养方案$");
     private static final Pattern SECTION = Pattern.compile("^[一二三四五六七八九十]+、");
+    // PDF 表格常把最后一行“考查”与后续说明段粘成一行；将说明恢复为独立证据块。
+    private static final Pattern TABLE_PROSE_BOUNDARY = Pattern.compile(
+            "(?:考试|考查)(?=为了|提醒|学生应|研究生应)");
     private final HeadingChunkStrategy fallback;
 
     public RuleChunkStrategy(HeadingChunkStrategy fallback) {
@@ -83,11 +86,25 @@ public class RuleChunkStrategy implements ChunkStrategy {
                                       String content, ChunkBudget budget) {
         String text = content.strip();
         if (text.isEmpty()) return;
-        for (String piece : fallback.split(text, budget)) {
-            String prefix = program.isBlank() ? "" : program + "\n";
-            if (!title.isBlank() && !piece.startsWith(title)) prefix += title + "\n";
-            if (!program.isBlank() && piece.startsWith(program)) prefix = "";
-            result.add((prefix + piece).strip());
+        List<String> parts = new ArrayList<>();
+        var boundary = TABLE_PROSE_BOUNDARY.matcher(text);
+        int lastCut = -1;
+        while (boundary.find()) {
+            if (boundary.end() > budget.maxChars()) lastCut = boundary.end();
+        }
+        if (lastCut > 0 && lastCut < text.length()) {
+            parts.add(text.substring(0, lastCut));
+            parts.add(text.substring(lastCut));
+        } else {
+            parts.add(text);
+        }
+        for (String part : parts) {
+            for (String piece : fallback.split(part, budget)) {
+                String prefix = program.isBlank() ? "" : program + "\n";
+                if (!title.isBlank() && !piece.startsWith(title)) prefix += title + "\n";
+                if (!program.isBlank() && piece.startsWith(program)) prefix = "";
+                result.add((prefix + piece).strip());
+            }
         }
     }
 }

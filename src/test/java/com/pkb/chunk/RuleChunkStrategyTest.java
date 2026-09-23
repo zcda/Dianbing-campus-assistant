@@ -44,4 +44,17 @@ class RuleChunkStrategyTest {
                 .allMatch(p -> p.contains("计算机科学与技术")));
         assertTrue(pieces.stream().anyMatch(p -> p.contains("软件工程方向") && p.contains("软件工程 全日制")));
     }
+
+    @Test
+    void separatesProseStuckToPdfCourseTableWithoutLosingProgramScope() {
+        String text = "生物医学工程 全日制学术硕士培养方案\n五、课程设置\n"
+                + "1408316015 生物医学信号智能处理 40 2.5 1 考试".repeat(35)
+                + "考查提醒同学们综合考虑研究方向、科研需要、个人兴趣和校区一致性。";
+        var pieces = strategy.split(text, ChunkBudget.of(1024, 128, 3));
+        var evidence = pieces.stream().filter(p -> p.contains("科研需要"))
+                .findFirst().orElseThrow();
+        assertTrue(evidence.length() < 200);
+        assertTrue(evidence.contains("生物医学工程 全日制学术硕士培养方案"));
+        assertTrue(evidence.contains("五、课程设置"));
+    }
 }

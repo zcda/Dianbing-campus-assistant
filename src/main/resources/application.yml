@@ -27,8 +27,8 @@ rag:
   # 可选：仅让对话/改写走云端快速模型，向量仍用上面的本地 Ollama。
   chat-api-base-url: ${RAG_CHAT_API_BASE_URL:}
   chat-api-key: ${RAG_CHAT_API_KEY:}
-  # 默认本地 llama3.1:8b；云端对话可改为 deepseek-v4-flash 等 OpenAI 兼容模型。
-  chat-model: ${RAG_CHAT_MODEL:llama3.1:8b}
+  # 默认本地 qwen2.5:7b，与 README 快速启动命令一致；云端模型可通过环境变量覆盖。
+  chat-model: ${RAG_CHAT_MODEL:qwen2.5:7b}
   # 向量模型：bge-m3，1024 维（ollama pull bge-m3）
   embedding-model: ${RAG_EMBEDDING_MODEL:bge-m3}
   embedding-dimension: 1024

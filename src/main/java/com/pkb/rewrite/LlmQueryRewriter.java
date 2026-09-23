@@ -49,6 +49,12 @@ public class LlmQueryRewriter implements QueryRewriter {
         if (!cfg.isEnabled() || normalized.isEmpty()) {
             return new Result(normalized, List.of(normalized), false);
         }
+        // 独立数值要求有确定性的拆分方式；省去一次 LLM 往返，也保住超时降级的召回。
+        List<String> numericParts = ruleBasedSplitter.splitParallelNumeric(normalized);
+        if (!numericParts.isEmpty()) {
+            int limit = Math.min(cfg.getMaxSubQuestions(), numericParts.size());
+            return new Result(normalized, numericParts.subList(0, limit), false);
+        }
         // R4 规则预判：简单问句跳过 LLM 改写，避免无差别的 10s+ 延迟
         if (!COMPOUND_SIGNAL.matcher(normalized).find()) {
             return new Result(normalized, List.of(normalized), false);
