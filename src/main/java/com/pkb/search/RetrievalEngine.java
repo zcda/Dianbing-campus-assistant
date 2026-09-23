@@ -18,8 +18,10 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 
 import com.pkb.config.RagProperties;
+import com.pkb.llm.EmbeddingClient;
 import com.pkb.search.channel.SearchChannel;
 import com.pkb.search.channel.SearchChannelResult;
+import com.pkb.search.channel.SearchChannelType;
 import com.pkb.search.channel.SearchContext;
 import com.pkb.search.postprocessor.SearchResultPostProcessor;
 
@@ -41,6 +43,7 @@ public class RetrievalEngine implements InitializingBean {
     private final List<SearchChannel> channels;
     private final List<SearchResultPostProcessor> registered;
     private final RagProperties props;
+    private final EmbeddingClient embeddingClient;
     private final Executor ioExecutor;
 
     private List<SearchResultPostProcessor> processors;
@@ -48,10 +51,12 @@ public class RetrievalEngine implements InitializingBean {
     public RetrievalEngine(List<SearchChannel> channels,
                            List<SearchResultPostProcessor> processors,
                            RagProperties props,
+                           EmbeddingClient embeddingClient,
                            @Qualifier("chatExecutor") Executor ioExecutor) {
         this.channels = channels;
         this.registered = processors;
         this.props = props;
+        this.embeddingClient = embeddingClient;
         this.ioExecutor = ioExecutor;
     }
 
@@ -96,7 +101,7 @@ public class RetrievalEngine implements InitializingBean {
         long start = System.nanoTime();
         if (subQueries.size() == 1) {
             SubResult result = retrieveForSubQuery(subQueries.get(0), subVectors.get(0), originalQuestion);
-            return aggregate(List.of(result), System.nanoTime() - start);
+            return checkQuestionFocus(aggregate(List.of(result), System.nanoTime() - start), originalQuestion, start);
         }
         List<CompletableFuture<SubResult>> futures = new ArrayList<>();
         for (int i = 0; i < subQueries.size(); i++) {
@@ -107,7 +112,48 @@ public class RetrievalEngine implements InitializingBean {
         List<SubResult> results = futures.stream()
                 .map(f -> f.join())
                 .toList();
-        return aggregate(results, System.nanoTime() - start);
+        return checkQuestionFocus(aggregate(results, System.nanoTime() - start), originalQuestion, start);
+    }
+
+    private RetrievalOutcome checkQuestionFocus(RetrievalOutcome outcome, String question, long start) {
+        if (outcome.sources().isEmpty() || !"batch".equalsIgnoreCase(props.getEvidence().getMode())
+                || props.getEvidence().getMinFocusScore() <= 0) return outcome;
+        var focus = AcademicQuestionFocus.extract(question);
+        if (focus.isEmpty()) return outcome;
+        try {
+            SubResult focused = retrieveForSubQuery(focus.get(), embeddingClient.embed(focus.get()), focus.get());
+            var vectorScore = focused.channelResults().stream()
+                    .filter(result -> result.type() == SearchChannelType.VECTOR)
+                    .flatMap(result -> result.results().stream())
+                    .map(RetrievedChunk::vectorScore)
+                    .filter(java.util.Objects::nonNull)
+                    .mapToDouble(Double::doubleValue).max();
+            if (vectorScore.isEmpty() || !focused.degraded().isEmpty()) {
+                log.warn("主题证据检查[{}]无可靠分数，fail-open 放行", focus.get());
+                return outcome;
+            }
+            double score = vectorScore.getAsDouble();
+            List<Map<String, Object>> trace = new ArrayList<>(outcome.subQueryTrace());
+            Map<String, Object> focusTrace = new LinkedHashMap<>();
+            focusTrace.put("query", focus.get());
+            boolean rejected = score < props.getEvidence().getMinFocusScore();
+            focusTrace.put("gateDecision", rejected ? "rejected_focus" : "pass_focus");
+            focusTrace.put("gateScore", score);
+            focusTrace.put("focusThreshold", props.getEvidence().getMinFocusScore());
+            trace.add(focusTrace);
+            if (!rejected) return new RetrievalOutcome(outcome.chunks(), outcome.sources(), outcome.anyPassed(),
+                    outcome.gateScore(), outcome.gateDecision(), outcome.candidateCount(), outcome.channelCounts(),
+                    trace, outcome.gateMs() + focused.gateMs(),
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+            log.info("主题证据检查[{}]拦截：score={} < 阈值 {}", focus.get(), score,
+                    props.getEvidence().getMinFocusScore());
+            return new RetrievalOutcome(List.of(), List.of(), false, outcome.gateScore(), "rejected_focus",
+                    outcome.candidateCount(), outcome.channelCounts(), trace, outcome.gateMs() + focused.gateMs(),
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+        } catch (Exception e) {
+            log.warn("主题证据检查[{}]失败，fail-open 放行: {}", focus.get(), e.toString());
+            return outcome;
+        }
     }
 
     /** 单个子问题的完整链路：通道召回 → 后置处理器链（异常不中断主链路，记降级标记） */

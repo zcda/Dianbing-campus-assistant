@@ -24,7 +24,7 @@ class RetrievalAggregationTest {
                         new RetrievedChunk(1, 2, "B", "strong").vectorScore(0.9)));
             }
         };
-        RetrievalEngine engine = new RetrievalEngine(List.of(channel), List.of(), new RagProperties(), Runnable::run);
+        RetrievalEngine engine = new RetrievalEngine(List.of(channel), List.of(), new RagProperties(), null, Runnable::run);
         engine.afterPropertiesSet();
         assertEquals("1:2", engine.retrieve(List.of("question"), List.of(new float[0])).chunks().get(0).ref());
     }
@@ -40,7 +40,7 @@ class RetrievalAggregationTest {
                         new RetrievedChunk(1, 1, "A", "evidence").vectorScore(score)));
             }
         };
-        RetrievalEngine engine = new RetrievalEngine(List.of(channel), List.of(), new RagProperties(), Runnable::run);
+        RetrievalEngine engine = new RetrievalEngine(List.of(channel), List.of(), new RagProperties(), null, Runnable::run);
         engine.afterPropertiesSet();
         assertEquals(0.8, engine.retrieve(List.of("first", "second"),
                 List.of(new float[0], new float[0])).chunks().get(0).bestScore());

@@ -169,12 +169,16 @@ public class RagProperties {
         private String mode = "batch";
         /** 批级最高分下限，<=0 表示关闭闸门（v2 语料扫描定档：信号/噪声重叠无完美分界，按"误丢比误放贵"取 0.50） */
         private double minGateScore = 0.50;
+        /** Cohort/program-prefixed questions must also match their actual topic; <=0 disables this check. */
+        private double minFocusScore = 0.55;
         /** 无分可读时的策略：allow = fail-open 放行 + WARN（降级路径绝不制造假阴性） */
         private String onMissingScore = "allow";
         public String getMode() { return mode; }
         public void setMode(String mode) { this.mode = mode; }
         public double getMinGateScore() { return minGateScore; }
         public void setMinGateScore(double minGateScore) { this.minGateScore = minGateScore; }
+        public double getMinFocusScore() { return minFocusScore; }
+        public void setMinFocusScore(double minFocusScore) { this.minFocusScore = minFocusScore; }
         public String getOnMissingScore() { return onMissingScore; }
         public void setOnMissingScore(String onMissingScore) { this.onMissingScore = onMissingScore; }
     }
