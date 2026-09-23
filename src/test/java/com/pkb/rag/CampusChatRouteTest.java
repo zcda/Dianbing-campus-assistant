@@ -97,19 +97,26 @@ class CampusChatRouteTest {
                         Map.of("vector", 1), List.of(), 0, 1));
         doAnswer(call -> {
             ChatClient.Listener listener = call.getArgument(2);
-            listener.onDelta("课程总学分至少23学分 [1]。");
+            listener.onDelta("学位课至少14学分，课程总学分至少23学分 [1]。");
             listener.onDone();
             return null;
         }).when(chatModel).stream(anyString(), anyString(), any());
         List<String> events = new ArrayList<>();
+        List<Map<String, Object>> completions = new ArrayList<>();
 
-        var result = service.chat(1L, question, (event, data) -> events.add(event));
+        var result = service.chat(1L, question, (event, data) -> {
+            events.add(event);
+            if ("done".equals(event)) completions.add((Map<String, Object>) data);
+        });
 
         assertEquals("campus_rule_mix", result.doneReason());
         assertEquals(1, result.llmCalls());
         assertTrue(result.answer().contains("虚构学生"));
         assertTrue(result.answer().contains("课程总学分至少23学分 [1]"));
         assertEquals(List.of("meta", "sources", "delta", "delta", "done"), events);
+        assertEquals(Map.of("total", 2, "supported", 1,
+                        "unsupported", List.of("学位课 14学分")),
+                completions.get(0).get("numericCreditCitations"));
         ArgumentCaptor<String> modelPrompt = ArgumentCaptor.forClass(String.class);
         verify(chatModel).stream(anyString(), modelPrompt.capture(), any());
         assertFalse(modelPrompt.getValue().contains("91分"));

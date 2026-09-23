@@ -1,5 +1,7 @@
 package com.pkb.conversation;
 
+import com.pkb.rag.NumericCitationCheck;
+import com.pkb.search.Source;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/conversations")
@@ -32,8 +35,19 @@ public class ConversationController {
     }
 
     @GetMapping("/{id}/messages")
-    public List<ChatMessage> messages(@PathVariable long id) {
-        return service.messages(id);
+    public List<MessageView> messages(@PathVariable long id) {
+        return service.messages(id).stream().map(MessageView::from).toList();
+    }
+
+    public record MessageView(Long id, String role, String content, List<Source> sources,
+                              LocalDateTime createdAt, String status,
+                              NumericCitationCheck.Result numericCreditCitations) {
+        static MessageView from(ChatMessage message) {
+            var audit = "assistant".equals(message.role())
+                    ? NumericCitationCheck.check(message.content(), message.sources()) : null;
+            return new MessageView(message.id(), message.role(), message.content(), message.sources(),
+                    message.createdAt(), message.status(), audit != null && audit.total() > 0 ? audit : null);
+        }
     }
 
     @DeleteMapping("/{id}")

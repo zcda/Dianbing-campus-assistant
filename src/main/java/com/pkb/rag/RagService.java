@@ -213,9 +213,17 @@ public class RagService {
                         t.llmFirstTokenMs = firstTokenAt[0] < 0 ? 0 : firstTokenAt[0] - t0;
                         t.totalMs = System.currentTimeMillis() - t0;
                         citations[0] = CitationCheck.check(answer.toString(), outcome.sources().size());
+                        var numericAudit = NumericCitationCheck.check(answer.toString(), outcome.sources());
                         persistAnswer(conversationId, answer.toString(), outcome.sources());
-                        sink.emit("done", done(mixedCampusRule ? "campus_rule_mix" : "ok",
-                                traceId, 1, citations[0], t));
+                        Map<String, Object> completion = done(mixedCampusRule ? "campus_rule_mix" : "ok",
+                                traceId, 1, citations[0], t);
+                        if (numericAudit.total() > 0) {
+                            completion.put("numericCreditCitations", Map.of(
+                                    "total", numericAudit.total(),
+                                    "supported", numericAudit.supported(),
+                                    "unsupported", numericAudit.unsupported()));
+                        }
+                        sink.emit("done", completion);
                         summaryLog(traceId, conversationId, question, prepared, outcome, 1, t, citations[0]);
                     }
                 });

@@ -9,6 +9,7 @@ import com.pkb.conversation.ConversationService;
 import com.pkb.llm.ChatClient;
 import com.pkb.llm.EmbeddingClient;
 import com.pkb.rag.CitationCheck;
+import com.pkb.rag.NumericCitationCheck;
 import com.pkb.rag.RagService;
 import com.pkb.search.Source;
 import org.junit.jupiter.api.Assumptions;
@@ -267,6 +268,18 @@ class GenerationEvalTest {
         metrics.put("角标可映射率(排除零角标)", EvalSupport.mean(coverageNoZeroCitations));
         metrics.put("零角标答案数", zeroCitationAnswers);
 
+        int numericClaims = 0;
+        int supportedNumericClaims = 0;
+        for (Recorded r : inLibrary) {
+            if (!"ok".equals(r.outcome().doneReason())) continue;
+            var audit = NumericCitationCheck.check(r.outcome().answer(), r.outcome().sources());
+            numericClaims += audit.total();
+            supportedNumericClaims += audit.supported();
+        }
+        metrics.put("数字学分已引来源匹配率", numericClaims == 0 ? null
+                : (double) supportedNumericClaims / numericClaims);
+        metrics.put("数字学分未匹配事实数", numericClaims - supportedNumericClaims);
+
         // —— 生成类 2.5：人工金标准事实的确定性检查（不调用模型）——
         List<Double> requiredFactCoverage = new ArrayList<>();
         List<Double> forbiddenFactClean = new ArrayList<>();
@@ -477,6 +490,13 @@ class GenerationEvalTest {
                         r.sample().queryId(), r.sample().query(), r.outcome().doneReason()));
             }
         }
+        for (Recorded r : recorded.stream().filter(x -> x.sample().requiresRag()).toList()) {
+            var audit = NumericCitationCheck.check(r.outcome().answer(), r.outcome().sources());
+            if (!audit.unsupported().isEmpty()) {
+                failures.add(String.format("- [%s] 数字学分缺少匹配的已引来源：%s",
+                        r.sample().queryId(), audit.unsupported()));
+            }
+        }
         if (!failures.isEmpty()) {
             md.append("\n## 失败明细\n\n").append(String.join("\n", failures)).append('\n');
         }
@@ -533,7 +553,7 @@ class GenerationEvalTest {
     }
 
     /** 计数类指标（整数展示），其余均按比率百分比展示 */
-    private static final Set<String> COUNT_METRICS = Set.of("零角标答案数", "judge样本数",
+    private static final Set<String> COUNT_METRICS = Set.of("零角标答案数", "数字学分未匹配事实数", "judge样本数",
             "已完成样本数", "错误样本数", "适用范围待复核样本数");
 
     private static String fmt(String key, Object value) {

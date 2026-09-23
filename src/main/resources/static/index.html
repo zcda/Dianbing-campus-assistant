@@ -83,6 +83,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
 .msg { margin-bottom: 14px; }
 .msg .q { font-weight: 600; font-size: 14px; color: #1f2329; }
 .answer { background: #fff; border: 1px solid #eceef1; border-radius: 8px; padding: 14px 16px; margin-top: 8px; }
+.citation-warning { margin-top: 7px; padding: 8px 10px; border-radius: 6px; background: #fff7e8; color: #874d00; font-size: 12px; line-height: 1.6; }
 .sources { margin-top: 10px; }
 .sources-title { font-size: 12px; font-weight: 600; color: #4e5969; margin-bottom: 6px; }
 .source-card { background: #fff; border: 1px solid #eceef1; border-left: 3px solid #00b96b; border-radius: 6px; padding: 9px 11px; margin-bottom: 7px; cursor: pointer; }
@@ -232,6 +233,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
             </template>
             <template v-else>
               <div class="answer md" v-html="render(m.content)"></div>
+              <div v-if="m.citationWarning" class="citation-warning">{{ m.citationWarning }}</div>
               <div v-if="m.sources && m.sources.length" class="sources">
                 <div class="sources-title">引用来源（点击跳转到对应分块）</div>
                 <div v-for="s in m.sources" :key="s.index" class="source-card" @click="jumpToChunk(s.noteId, s.seq)">
@@ -509,7 +511,9 @@ createApp({
       if (conv && !conv.loaded) {
         try {
           const res = await fetch(`/api/conversations/${id}/messages`);
-          conv.messages = res.ok ? await res.json() : [];
+          conv.messages = res.ok ? (await res.json()).map(m => ({
+            ...m, citationWarning: creditCitationWarning(m.numericCreditCitations)
+          })) : [];
         } catch (e) {
           conv.messages = [];
         }
@@ -600,8 +604,16 @@ createApp({
         if (conv === activeConversation.value) scrollChat();
       } else if (event === 'error') {
         conv.error = payload.message;
+      } else if (event === 'done') {
+        reply.citationWarning = creditCitationWarning(payload.numericCreditCitations);
       }
-      // done：无附加处理
+    }
+
+    function creditCitationWarning(audit) {
+      if (!audit?.unsupported?.length) return '';
+      return '以下学分数字未在已引来源中找到匹配：'
+        + audit.unsupported.join('、')
+        + '。请核对下方原文；自动检查仅覆盖学分数字。';
     }
 
     function scrollChat() {
