@@ -70,10 +70,12 @@ class GateSweepTest {
 
         double originalGate = props.getEvidence().getMinGateScore();
         double originalFocus = props.getEvidence().getMinFocusScore();
+        double originalTarget = props.getEvidence().getMinAnswerTargetScore();
         double originalMinSim = props.getMinSimilarity();
         String originalMode = props.getEvidence().getMode();
         try {
             props.getEvidence().setMinFocusScore(0); // 隔离扫描主闸门，不混入主题检查
+            props.getEvidence().setMinAnswerTargetScore(0);
             // 每个问题只向量化一次，后续所有档位复用
             Map<String, float[]> vectors = new LinkedHashMap<>();
             for (EvalSample s : samples) {
@@ -109,6 +111,7 @@ class GateSweepTest {
         } finally {
             props.getEvidence().setMinGateScore(originalGate);
             props.getEvidence().setMinFocusScore(originalFocus);
+            props.getEvidence().setMinAnswerTargetScore(originalTarget);
             props.getEvidence().setMode(originalMode);
             props.setMinSimilarity(originalMinSim);
         }

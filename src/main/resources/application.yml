@@ -60,6 +60,7 @@ rag:
     mode: batch               # batch（整批判）| none（关闭）
     min-gate-score: 0.60      # 40 题校园集扫描候选：5 道库外题全拒、30 道库内题零误拒；扩大留出集后再定标
     min-focus-score: 0.55     # 去掉学年/专业前缀后再查主题；按 30 正例和 12 负例校准，仍需新留出集验证
+    min-answer-target-score: 0.55 # 对“的/后”之后的实际追问再查证据；按 30 正例和 8 近邻题校准
     on-missing-score: allow   # 无分可读时 fail-open 放行 + WARN（降级路径绝不制造假阴性）
 
   # —— 分块预算（D5）——

@@ -199,7 +199,7 @@ docker compose up -d
 
 扩展验收集是 [campus_eval_v2.jsonl](src/test/resources/eval/campus_eval_v2.jsonl)：40 条样本，包含 30 条应答、5 条严格拒答和 5 条适用范围提醒，覆盖计算机、软件工程、数学、新闻传播、航空宇航、生物医学工程、论文要求和实践学分。每条应答题的必要事实都绑定真实 PDF 片段，并由 `CampusEvalCorpusTest` 校验。
 
-v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2026-09-22.md)；重新建索引后的 [在线回归记录](doc/杏规-在线回归记录-2026-09-23.md) 测得 Hit@5 为 96.7%、必要证据 Recall@5 为 95.0%。C128 已命中；C119 原句单查询仍未命中，但完整问答的确定性拆分召回了两条证据。原 0.60 闸门在首批独立拒答题上有 3/12 道过召回；新增主题二次检查后这 12 道全拒，原 30 道应答题零误拒。新建的普通库外题 12/12 拒答，但更难的培养方案近邻题仍有 **3/8 道过召回**；在线拒答质量门槛保持失败，详见回归记录。
+v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2026-09-22.md)；重新建索引后的 [在线回归记录](doc/杏规-在线回归记录-2026-09-23.md) 测得 Hit@5 为 96.7%、必要证据 Recall@5 为 95.0%。C128 已命中；C119 原句单查询仍未命中，但完整问答的确定性拆分召回了两条证据。0.60 主闸门、0.55 主题检查和 0.55 具体追问检查组合后，现有 32 道库外题全部拒答，原 30 道应答题零误拒。具体追问规则使用了这 8 道近邻题校准，仍需新的独立样本验证。
 
 ```powershell
 .\mvnw.cmd '-Dtest=CampusEvalCorpusTest,RuleChunkStrategyTest,RuleScopeTest,TextCleanerRuleTest' test
@@ -211,7 +211,7 @@ v2 的首轮结果见 [扩展集评测记录](doc/杏规-扩展集评测记录-2
 .\mvnw.cmd '-Dtest=GenerationEvalTest' '-Deval.dataset=/eval/campus_eval_v2.jsonl' '-Deval.tag=campus-v2' '-Deval.judge=false' test
 # 对复杂题只跑指定题号
 .\mvnw.cmd '-Dtest=GenerationEvalTest' '-Deval.dataset=/eval/campus_eval_v2.jsonl' '-Deval.queryIds=C119,C128' '-Deval.judge=false' test
-# 拒答回归：包含已用于校准的 12 题、未参与校准的普通库外题 12 题和近邻题 8 题；目前近邻题 3/8 过召回，门槛预期失败
+# 拒答回归：32 道题当前全拒；其中首批 12 题和近邻 8 题已用于规则校准，不能再视作独立验证
 .\mvnw.cmd '-Dtest=RefusalHoldoutTest' '-Deval.online=true' test
 ```
 

@@ -171,6 +171,8 @@ public class RagProperties {
         private double minGateScore = 0.50;
         /** Cohort/program-prefixed questions must also match their actual topic; <=0 disables this check. */
         private double minFocusScore = 0.55;
+        /** Checks the actual requested fact after a connective clause; <=0 disables it. */
+        private double minAnswerTargetScore = 0.55;
         /** 无分可读时的策略：allow = fail-open 放行 + WARN（降级路径绝不制造假阴性） */
         private String onMissingScore = "allow";
         public String getMode() { return mode; }
@@ -179,6 +181,8 @@ public class RagProperties {
         public void setMinGateScore(double minGateScore) { this.minGateScore = minGateScore; }
         public double getMinFocusScore() { return minFocusScore; }
         public void setMinFocusScore(double minFocusScore) { this.minFocusScore = minFocusScore; }
+        public double getMinAnswerTargetScore() { return minAnswerTargetScore; }
+        public void setMinAnswerTargetScore(double minAnswerTargetScore) { this.minAnswerTargetScore = minAnswerTargetScore; }
         public String getOnMissingScore() { return onMissingScore; }
         public void setOnMissingScore(String onMissingScore) { this.onMissingScore = onMissingScore; }
     }

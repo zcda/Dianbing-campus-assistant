@@ -23,6 +23,10 @@ class AcademicQuestionFocusTest {
                 AcademicQuestionFocus.extract("2026级软件工程学硕每学年学费是多少钱？").orElseThrow());
         assertTrue(AcademicQuestionFocus.extract("2026级软件工程本科每学年学费是多少钱？").isEmpty());
         assertTrue(AcademicQuestionFocus.extract(" ").isEmpty());
+        assertEquals("教材购买链接是什么？", AcademicQuestionFocus.answerTarget(
+                "培养方案里学位课的教材购买链接是什么？").orElseThrow());
+        assertEquals("怎样申请人工调课？", AcademicQuestionFocus.answerTarget(
+                "选课时间冲突后怎样申请人工调课？").orElseThrow());
     }
 
     @Test

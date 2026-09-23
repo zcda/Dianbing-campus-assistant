@@ -120,8 +120,19 @@ public class RetrievalEngine implements InitializingBean {
                 || props.getEvidence().getMinFocusScore() <= 0) return outcome;
         var focus = AcademicQuestionFocus.extract(question);
         if (focus.isEmpty()) return outcome;
+        outcome = checkFocusedEvidence(outcome, focus.get(), props.getEvidence().getMinFocusScore(),
+                "focus", start);
+        if (outcome.sources().isEmpty() || props.getEvidence().getMinAnswerTargetScore() <= 0) return outcome;
+        var target = AcademicQuestionFocus.answerTarget(focus.get());
+        if (target.isEmpty()) return outcome;
+        return checkFocusedEvidence(outcome, target.get(), props.getEvidence().getMinAnswerTargetScore(),
+                "answer_target", start);
+    }
+
+    private RetrievalOutcome checkFocusedEvidence(RetrievalOutcome outcome, String query, double threshold,
+                                                   String kind, long start) {
         try {
-            SubResult focused = retrieveForSubQuery(focus.get(), embeddingClient.embed(focus.get()), focus.get());
+            SubResult focused = retrieveForSubQuery(query, embeddingClient.embed(query), query);
             var vectorScore = focused.channelResults().stream()
                     .filter(result -> result.type() == SearchChannelType.VECTOR)
                     .flatMap(result -> result.results().stream())
@@ -129,29 +140,28 @@ public class RetrievalEngine implements InitializingBean {
                     .filter(java.util.Objects::nonNull)
                     .mapToDouble(Double::doubleValue).max();
             if (vectorScore.isEmpty() || !focused.degraded().isEmpty()) {
-                log.warn("主题证据检查[{}]无可靠分数，fail-open 放行", focus.get());
+                log.warn("证据检查[{}:{}]无可靠分数，fail-open 放行", kind, query);
                 return outcome;
             }
             double score = vectorScore.getAsDouble();
             List<Map<String, Object>> trace = new ArrayList<>(outcome.subQueryTrace());
             Map<String, Object> focusTrace = new LinkedHashMap<>();
-            focusTrace.put("query", focus.get());
-            boolean rejected = score < props.getEvidence().getMinFocusScore();
-            focusTrace.put("gateDecision", rejected ? "rejected_focus" : "pass_focus");
+            focusTrace.put("query", query);
+            boolean rejected = score < threshold;
+            focusTrace.put("gateDecision", rejected ? "rejected_" + kind : "pass_" + kind);
             focusTrace.put("gateScore", score);
-            focusTrace.put("focusThreshold", props.getEvidence().getMinFocusScore());
+            focusTrace.put("threshold", threshold);
             trace.add(focusTrace);
             if (!rejected) return new RetrievalOutcome(outcome.chunks(), outcome.sources(), outcome.anyPassed(),
                     outcome.gateScore(), outcome.gateDecision(), outcome.candidateCount(), outcome.channelCounts(),
                     trace, outcome.gateMs() + focused.gateMs(),
                     TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-            log.info("主题证据检查[{}]拦截：score={} < 阈值 {}", focus.get(), score,
-                    props.getEvidence().getMinFocusScore());
-            return new RetrievalOutcome(List.of(), List.of(), false, outcome.gateScore(), "rejected_focus",
+            log.info("证据检查[{}:{}]拦截：score={} < 阈值 {}", kind, query, score, threshold);
+            return new RetrievalOutcome(List.of(), List.of(), false, outcome.gateScore(), "rejected_" + kind,
                     outcome.candidateCount(), outcome.channelCounts(), trace, outcome.gateMs() + focused.gateMs(),
                     TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
         } catch (Exception e) {
-            log.warn("主题证据检查[{}]失败，fail-open 放行: {}", focus.get(), e.toString());
+            log.warn("证据检查[{}:{}]失败，fail-open 放行: {}", kind, query, e.toString());
             return outcome;
         }
     }
