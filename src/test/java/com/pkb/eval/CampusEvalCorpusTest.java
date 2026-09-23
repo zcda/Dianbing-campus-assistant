@@ -5,6 +5,7 @@ import com.pkb.chunk.HeadingChunkStrategy;
 import com.pkb.chunk.RuleChunkStrategy;
 import com.pkb.ingest.TextCleaner;
 import com.pkb.ingest.TikaDocumentParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -17,6 +18,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** 金标准必须在真实 PDF 的实际切片中出现，避免凭空编造评测题。 */
 class CampusEvalCorpusTest {
+    @Test
+    void refusalHoldoutTopicsAreAbsentFromBundledRulePdf() throws Exception {
+        Path pdf = Path.of("doc", "2026年全日制学术学位硕士研究生培养方案_261716157506.pdf");
+        String text;
+        try (var in = Files.newInputStream(pdf)) {
+            text = new TextCleaner().clean(new TikaDocumentParser().parse(in), true);
+        }
+        var rows = Files.readAllLines(Path.of("src/test/resources/eval/campus_refusal_holdout_v1.jsonl"));
+        assertEquals(12, rows.size(), "留出集题数变化需人工复核");
+        var mapper = new ObjectMapper();
+        for (String row : rows) {
+            var sample = mapper.readTree(row);
+            String term = sample.path("absentTerm").asText();
+            assertFalse(term.isBlank(), "库外样本必须标明缺席的主题词");
+            assertFalse(text.contains(term), sample.path("queryId").asText() + " 的主题已出现在 PDF：" + term);
+        }
+    }
+
     @Test
     void allExpectedEvidenceExistsInBundledPdfChunks() throws Exception {
         assertCorpus("/eval/campus_eval_v1.jsonl", 10, 3, 2);
