@@ -1,0 +1,29 @@
+[
+  {
+    "file": "2026年全日制学术学位硕士研究生培养方案_261716157506.pdf",
+    "sha256": "50183A049356C9BEF98865EC39EF730B3462CE84C56339D1AAB61CF34BECE625",
+    "title": "电子科技大学2026年全日制学术学位硕士研究生培养方案",
+    "metadata": {
+      "category": "研究生培养",
+      "issuer": "电子科技大学研究生院",
+      "sourceUrl": "https://gr.uestc.edu.cn/attached/papers/204/202608/2026%E5%B9%B4%E5%85%A8%E6%97%A5%E5%88%B6%E5%AD%A6%E6%9C%AF%E5%AD%A6%E4%BD%8D%E7%A1%95%E5%A3%AB%E7%A0%94%E7%A9%B6%E7%94%9F%E5%9F%B9%E5%85%BB%E6%96%B9%E6%A1%88_261716157506.pdf",
+      "status": "active",
+      "audience": "全日制学术硕士",
+      "campus": "全部校区",
+      "academicYear": "2026",
+      "version": "2026.08 官网更新"
+    }
+  },
+  {
+    "file": "20190412092930_47083.pdf",
+    "sha256": "C75706431DDB25909D886AF52430134AEAC75F9AC880C8F5337682B41AE6BB44",
+    "title": "电子科技大学研究生学位授予实施细则（历史版本）",
+    "metadata": {
+      "category": "学位授予",
+      "issuer": "电子科技大学",
+      "status": "expired",
+      "audience": "研究生",
+      "version": "历史文本；官网已有后续修订"
+    }
+  }
+]

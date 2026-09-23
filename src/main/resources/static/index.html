@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>知源 · 个人知识库</title>
+<title>杏规 · 校园规则查看助手</title>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.38/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
@@ -16,47 +16,86 @@ header h1 { font-size: 17px; color: #00b96b; }
 .warn { color: #d4380d; background: #fff2e8; padding: 3px 10px; border-radius: 4px; font-size: 12px; }
 
 main { flex: 1; display: flex; min-height: 0; }
+.pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: #fff; border-right: 1px solid #e5e6eb; }
+.pane:last-child { border-right: none; }
+.sessions { width: 190px; flex-shrink: 0; background: #fafbfc; }
+.notes { width: 240px; flex-shrink: 0; }
+.detail { flex: 1 1 0; }
+.chat { flex: 1 1 0; border-right: none; }
 
-/* 左栏：笔记 */
-.left { width: 44%; min-width: 400px; display: flex; flex-direction: column; background: #fff; border-right: 1px solid #e5e6eb; }
-.toolbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #f0f1f3; flex-shrink: 0; }
-.muted { color: #86909c; font-size: 12px; }
-.note-list { flex: 1; overflow-y: auto; list-style: none; }
-.note-list li { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f5f6f8; border-left: 3px solid transparent; }
-.note-list li:hover { background: #f7f9f8; }
-.note-list li.active { background: #f0faf5; border-left-color: #00b96b; }
-.note-title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.note-time { font-size: 12px; color: #86909c; margin-top: 2px; }
+.pane-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border-bottom: 1px solid #f0f1f3; flex-shrink: 0; }
+.pane-title { font-size: 13px; font-weight: 600; color: #4e5969; }
+.count { font-weight: 400; color: #86909c; }
+.pane-actions { display: flex; gap: 6px; }
+.hidden-file { display: none; }
 
-.editor { border-top: 1px solid #e5e6eb; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: 58%; flex-shrink: 0; background: #fbfcfb; }
-.editor input { padding: 8px 10px; border: 1px solid #d0d3d6; border-radius: 6px; font-size: 14px; }
-.editor textarea { flex: 1; min-height: 150px; padding: 10px; border: 1px solid #d0d3d6; border-radius: 6px; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.6; resize: vertical; }
-.editor-actions { display: flex; gap: 8px; align-items: center; }
 button { border-radius: 6px; padding: 7px 16px; cursor: pointer; font-size: 14px; border: 1px solid #d0d3d6; background: #fff; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button.primary { background: #00b96b; color: #fff; border-color: #00b96b; }
 button.primary:hover:not(:disabled) { background: #00a763; }
 button.danger { color: #f53f3f; border-color: #ffd5d1; }
+button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
 
-/* 右栏：问答 */
-.right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.chat { flex: 1; overflow-y: auto; padding: 20px 26px; }
-.empty { color: #86909c; text-align: center; margin-top: 90px; font-size: 14px; }
-.last-q { font-weight: 600; font-size: 14px; color: #1f2329; margin-bottom: 10px; }
-.answer { background: #fff; border: 1px solid #eceef1; border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
-.sources-title { font-size: 13px; font-weight: 600; color: #4e5969; margin-bottom: 8px; }
-.source-card { background: #fff; border: 1px solid #eceef1; border-left: 3px solid #00b96b; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
-.source-card:hover { border-color: #00b96b; }
-.source-head { font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; }
-.sim { color: #00b96b; font-weight: 500; font-size: 12px; }
+.list { flex: 1; overflow-y: auto; list-style: none; }
+.list li { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid #f5f6f8; border-left: 3px solid transparent; }
+.list li:hover { background: #f7f9f8; }
+.list li.active { background: #f0faf5; border-left-color: #00b96b; }
+.li-row { display: flex; align-items: center; gap: 6px; }
+.li-title { flex: 1; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.li-del { color: #c9cdd4; font-size: 15px; line-height: 1; padding: 0 2px; visibility: hidden; }
+.list li:hover .li-del { visibility: visible; }
+.li-del:hover { color: #f53f3f; }
+.li-sub { font-size: 12px; color: #86909c; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.li-hint, .empty-sm { color: #86909c; font-size: 13px; padding: 16px 12px; line-height: 1.7; }
+.empty-sm { padding: 26px 18px; }
+.badge { padding: 0 5px; border-radius: 3px; background: #f0faf5; color: #00b96b; font-size: 11px; }
+.busy { color: #00b96b; font-size: 12px; }
+
+/* 详情：正文 / 分块 */
+.tabs { display: flex; gap: 4px; padding: 8px 12px 0; border-bottom: 1px solid #e5e6eb; flex-shrink: 0; }
+.tab { border: none; background: none; padding: 6px 10px; font-size: 13px; color: #86909c; border-bottom: 2px solid transparent; border-radius: 0; }
+.tab.on { color: #00b96b; font-weight: 600; border-bottom-color: #00b96b; }
+
+.editor { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px; min-height: 0; }
+.editor input { padding: 8px 10px; border: 1px solid #d0d3d6; border-radius: 6px; font-size: 14px; }
+.editor textarea { flex: 1; min-height: 120px; padding: 10px; border: 1px solid #d0d3d6; border-radius: 6px; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.6; resize: none; }
+.editor input:focus, .editor textarea:focus, .ask-bar input:focus { outline: none; border-color: #00b96b; }
+.editor-actions { display: flex; gap: 8px; align-items: center; }
+.rule-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 190px; overflow-y: auto; }
+.rule-fields label { display: flex; flex-direction: column; gap: 3px; color: #4e5969; font-size: 11px; }
+.rule-fields input, .rule-fields select { width: 100%; padding: 6px; border: 1px solid #d0d3d6; border-radius: 5px; font-size: 12px; }
+.rule-fields .wide { grid-column: 1 / -1; }
+.rule-hint { color: #86909c; font-size: 11px; line-height: 1.5; }
+
+.chunk-wrap { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.chunk { border: 1px solid #eceef1; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; cursor: pointer; transition: border-color .12s, background .12s; }
+.chunk:hover { border-color: #c9cdd4; }
+.chunk.hit { border-color: #00b96b; background: #f0faf5; }
+.chunk-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #86909c; margin-bottom: 5px; }
+.chunk-seq { font-weight: 600; color: #00b96b; }
+.chunk-sec { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4e5969; }
+.chunk-meta { flex-shrink: 0; }
+.chunk-body { font-family: inherit; font-size: 12px; line-height: 1.65; color: #4e5969; white-space: pre-wrap; word-break: break-word; max-height: 190px; overflow: hidden; }
+
+/* 问答 */
+.chat-head { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-bottom: 1px solid #f0f1f3; flex-shrink: 0; }
+.chat-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.msg { margin-bottom: 14px; }
+.msg .q { font-weight: 600; font-size: 14px; color: #1f2329; }
+.answer { background: #fff; border: 1px solid #eceef1; border-radius: 8px; padding: 14px 16px; margin-top: 8px; }
+.sources { margin-top: 10px; }
+.sources-title { font-size: 12px; font-weight: 600; color: #4e5969; margin-bottom: 6px; }
+.source-card { background: #fff; border: 1px solid #eceef1; border-left: 3px solid #00b96b; border-radius: 6px; padding: 9px 11px; margin-bottom: 7px; cursor: pointer; }
+.source-card:hover { border-color: #00b96b; background: #f7fdfa; }
+.source-head { font-weight: 600; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; }
+.sim { color: #00b96b; font-weight: 500; font-size: 12px; flex-shrink: 0; }
 .source-snippet { font-size: 12px; color: #4e5969; margin-top: 4px; line-height: 1.6; }
-.error { color: #f53f3f; background: #ffece8; border-radius: 6px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
+.error { color: #f53f3f; background: #ffece8; border-radius: 6px; padding: 10px 12px; font-size: 13px; }
 .cursor { display: inline-block; color: #00b96b; animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-.ask-bar { display: flex; gap: 8px; padding: 12px 16px; background: #fff; border-top: 1px solid #e5e6eb; flex-shrink: 0; }
-.ask-bar input { flex: 1; padding: 10px 12px; border: 1px solid #d0d3d6; border-radius: 6px; font-size: 14px; }
-.ask-bar input:focus, .editor input:focus, .editor textarea:focus { outline: none; border-color: #00b96b; }
+.ask-bar { display: flex; gap: 8px; padding: 11px 16px; background: #fff; border-top: 1px solid #e5e6eb; flex-shrink: 0; }
+.ask-bar input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid #d0d3d6; border-radius: 6px; font-size: 14px; }
 
 /* Markdown 渲染 */
 .md { line-height: 1.75; font-size: 14px; word-break: break-word; }
@@ -73,56 +112,149 @@ button.danger { color: #f53f3f; border-color: #ffd5d1; }
 <body>
 <div id="app">
   <header>
-    <h1>知源 · 个人知识库</h1>
-    <span v-if="!hasApiKey" class="warn">未配置 API Key：笔记可正常保存（切片暂不入向量索引），问答不可用。设置环境变量 LLM_API_KEY 后重启即可。</span>
+    <h1>杏规 · 校园规则查看助手</h1>
+    <span v-if="!hasApiKey" class="warn">模型服务未配置，规则可保存，问答暂不可用。</span>
   </header>
   <main>
-    <section class="left">
-      <div class="toolbar">
-        <button class="primary" @click="newNote">+ 新建笔记</button>
-        <span class="muted">共 {{ notes.length }} 篇 · 用 ## 分节，保存后自动切片向量化</span>
+    <!-- ① 会话列表 -->
+    <aside class="pane sessions">
+      <div class="pane-head">
+        <span class="pane-title">会话</span>
+        <button class="mini primary" @click="createConversation">+ 新建</button>
       </div>
-      <div class="editor" v-if="editorOpen">
-        <input v-model="form.title" placeholder="标题，如：CMS 与 G1 的区别"/>
-        <textarea v-model="form.content" placeholder="Markdown 正文。用 ## 二级标题分节，单块超过 500 字会自动定长切片（重叠 50 字）"></textarea>
+      <ul class="list">
+        <li v-for="c in conversations" :key="c.id" :class="{ active: c.id === activeConversationId }" @click="selectConversation(c.id)">
+          <div class="li-row">
+            <span class="li-title" :title="c.title">{{ c.title }}</span>
+            <span class="li-del" title="删除会话" @click.stop="deleteConversation(c.id)">×</span>
+          </div>
+          <div class="li-sub">
+            <span>{{ formatTime(c.updatedAt) }}</span>
+            <span v-if="c.asking" class="busy">回答中</span>
+          </div>
+        </li>
+        <li v-if="!conversations.length" class="li-hint">还没有会话<br>点「新建」开始提问</li>
+      </ul>
+    </aside>
+
+    <!-- ② 规则列表 -->
+    <aside class="pane notes">
+      <div class="pane-head">
+        <span class="pane-title">规则 <span class="count">{{ notes.length }}</span></span>
+        <div class="pane-actions">
+          <button class="mini primary" @click="newNote">+ 新建</button>
+          <button class="mini" @click="loadBundled" :disabled="importing">加载示例</button>
+          <button class="mini" @click="pickFile" :disabled="importing">{{ importing ? '导入中' : '导入' }}</button>
+          <input ref="fileInput" class="hidden-file" type="file" @change="importFile"
+                 accept=".md,.markdown,.txt,.pdf,.docx,.doc,.pptx,.ppt,.html,.htm,.rtf,.odt,.epub,.xlsx"/>
+        </div>
+      </div>
+      <ul class="list">
+        <li v-for="n in notes" :key="n.id" :class="{ active: selectedNoteId === n.id }" @click="openNote(n.id)">
+          <div class="li-title" :title="n.title">{{ n.title }}</div>
+          <div class="li-sub">
+            <span>{{ formatTime(n.updatedAt) }}</span>
+            <span class="badge">{{ n.status === 'active' ? '有效' : n.status === 'draft' ? '草稿' : n.status === 'expired' ? '已过期' : n.status === 'revoked' ? '已废止' : '状态未标注' }}</span>
+            <span v-if="n.category" class="badge">{{ n.category }}</span>
+            <span v-if="n.sourceType === 'import'" class="badge" :title="'导入自 ' + (n.sourceFilename || '文件')">导入</span>
+          </div>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- ③ 笔记详情：正文 / 分块 -->
+    <section class="pane detail">
+      <div class="tabs">
+        <button class="tab" :class="{ on: detailTab === 'content' }" @click="detailTab = 'content'">正文</button>
+        <button class="tab" :class="{ on: detailTab === 'chunks' }" @click="showChunks">
+          分块<span v-if="selectedNoteId">（{{ chunks.length }}）</span>
+        </button>
+      </div>
+
+      <div v-if="!selectedNoteId && !editingNew" class="empty-sm">选择一份规则，或新建并填写官方来源。</div>
+
+      <div v-else-if="detailTab === 'content'" class="editor">
+        <input v-model="form.title" placeholder="规则标题，如：学生请假管理办法"/>
+        <div class="rule-fields">
+          <label>状态<select v-model="form.metadata.status"><option value="draft">草稿</option><option value="active">有效</option><option value="expired">已过期</option><option value="revoked">已废止</option></select></label>
+          <label>分类<input v-model="form.metadata.category" placeholder="学籍 / 考试 / 宿舍"/></label>
+          <label>发布部门<input v-model="form.metadata.issuer" placeholder="如：教务处"/></label>
+          <label>文号<input v-model="form.metadata.documentNo"/></label>
+          <label class="wide">官方来源链接<input v-model="form.metadata.sourceUrl" type="url" placeholder="https://学校官网/通知或文件"/></label>
+          <label>发布日期<input v-model="form.metadata.publishedAt" type="date"/></label>
+          <label>生效日期<input v-model="form.metadata.effectiveFrom" type="date"/></label>
+          <label>失效日期<input v-model="form.metadata.effectiveTo" type="date"/></label>
+          <label>适用对象<input v-model="form.metadata.audience" placeholder="本科生 / 研究生 / 全体学生"/></label>
+          <label>校区<input v-model="form.metadata.campus" placeholder="本部 / 全部校区"/></label>
+          <label>适用学年<input v-model="form.metadata.academicYear" placeholder="如：2026-2027"/></label>
+          <label>版本<input v-model="form.metadata.version" placeholder="如：2026 修订"/></label>
+        </div>
+        <p class="rule-hint">新文档默认草稿；核对官网、发布部门和日期后设置为“有效”，才会进入问答。</p>
+        <p class="rule-hint" v-if="currentNote?.hasOriginal"><a :href="'/api/notes/' + form.id + '/original'">下载导入时的原始文件</a></p>
+        <textarea v-model="form.content" placeholder="粘贴规则原文。每条以“第一条 …”单独起行，系统按条款切分。"></textarea>
         <div class="editor-actions">
           <button class="primary" @click="saveNote" :disabled="saving">{{ saving ? '保存中…' : '保存' }}</button>
           <button v-if="form.id" class="danger" @click="deleteNote">删除</button>
-          <button @click="editorOpen = false">收起</button>
         </div>
       </div>
-      <ul class="note-list">
-        <li v-for="n in notes" :key="n.id" :class="{ active: form.id === n.id }" @click="openNote(n.id)">
-          <div class="note-title">{{ n.title }}</div>
-          <div class="note-time">{{ formatTime(n.updatedAt) }}</div>
-        </li>
-      </ul>
+
+      <div v-else class="chunk-wrap" ref="chunkList">
+        <div v-if="!chunks.length" class="empty-sm">这份规则还没有切片（正文为空或索引尚未完成）。</div>
+        <div v-for="c in chunks" :key="c.seq" class="chunk" :class="{ hit: c.seq === highlightSeq }"
+             :data-seq="c.seq" @click="highlightSeq = c.seq">
+          <div class="chunk-head">
+            <span class="chunk-seq">#{{ c.seq + 1 }}</span>
+            <span class="chunk-sec" v-if="sectionOf(c)">{{ sectionOf(c) }}</span>
+            <span class="chunk-meta">{{ c.length }} 字 · {{ c.hasEmbedding ? '已向量化' : '未向量化' }}</span>
+          </div>
+          <pre class="chunk-body">{{ c.content }}</pre>
+        </div>
+      </div>
     </section>
 
-    <section class="right">
-      <div class="chat" ref="chatBox">
-        <div v-if="!lastQuestion && !asking" class="empty">
-          向你的知识库提问，例如：CMS 和 G1 有什么区别？<br><br>
-          答案基于你自己的笔记生成，并附带可点击的引用溯源。
-        </div>
-        <div v-if="lastQuestion" class="last-q">问：{{ lastQuestion }}</div>
-        <div v-if="answer" class="answer md" v-html="renderedAnswer"></div>
-        <div v-if="asking" class="cursor">▍</div>
-        <div v-if="sources.length">
-          <div class="sources-title">引用来源（点击跳转到笔记）</div>
-          <div v-for="s in sources" :key="s.index" class="source-card" @click="openNote(s.noteId)">
-            <div class="source-head">
-              <span>[{{ s.index }}] {{ s.noteTitle }}</span>
-              <span class="sim">相似度 {{ (s.similarity * 100).toFixed(0) }}%</span>
-            </div>
-            <div class="source-snippet">{{ snippet(s.content) }}</div>
-          </div>
-        </div>
-        <div v-if="errorMsg" class="error">{{ errorMsg }}</div>
+    <!-- ④ 问答 -->
+    <section class="pane chat">
+      <div class="chat-head">
+        <span class="pane-title">{{ activeConversation ? activeConversation.title : '问答' }}</span>
+        <span v-if="activeConversation && activeConversation.asking" class="busy">正在回答…</span>
       </div>
-      <div class="ask-bar">
-        <input v-model="question" placeholder="输入问题，回车提问" @keydown.enter.prevent="ask" :disabled="asking"/>
-        <button class="primary" @click="ask" :disabled="asking || !question.trim()">{{ asking ? '回答中…' : '提问' }}</button>
+      <div class="chat-body" ref="chatBox">
+        <div v-if="!activeConversation" class="empty-sm">左侧「+ 新建」一个会话开始提问。</div>
+        <template v-else>
+          <div v-if="!activeConversation.messages.length" class="empty-sm">
+            例如：2026级计算机科学与技术全日制学硕总学分至少多少？<br><br>
+            回答依据当前有效规则，点击引用可查看条款与官方来源。
+          </div>
+          <div v-for="(m, i) in activeConversation.messages" :key="m.id || i" class="msg">
+            <template v-if="m.role === 'user'">
+              <div class="q">问：{{ m.content }}</div>
+            </template>
+            <template v-else>
+              <div class="answer md" v-html="render(m.content)"></div>
+              <div v-if="m.sources && m.sources.length" class="sources">
+                <div class="sources-title">引用来源（点击跳转到对应分块）</div>
+                <div v-for="s in m.sources" :key="s.index" class="source-card" @click="jumpToChunk(s.noteId, s.seq)">
+                  <div class="source-head">
+                    <span>[{{ s.index }}] {{ s.noteTitle }}{{ s.rule?.articleNo ? ' · ' + s.rule.articleNo : ' · 第 ' + (s.seq + 1) + ' 块' }}</span>
+                    <span class="sim">{{ (s.similarity * 100).toFixed(0) }}%</span>
+                  </div>
+                  <div class="source-snippet" v-if="s.rule">{{ s.rule.issuer }} · {{ s.rule.audience || '适用范围未标注' }} · {{ s.rule.effectiveFrom || '生效日期未标注' }}<a v-if="s.rule.sourceUrl" :href="s.rule.sourceUrl" target="_blank" rel="noopener noreferrer" @click.stop> · 查看官方原文</a></div>
+                  <div class="source-snippet">{{ snippet(s.content) }}</div>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div v-if="activeConversation.asking" class="cursor">▍</div>
+          <div v-if="activeConversation.error" class="error">{{ activeConversation.error }}</div>
+        </template>
+      </div>
+      <div class="ask-bar" v-if="activeConversation">
+        <input v-model="activeConversation.draft" placeholder="请输入想查询的校园规则，回车提问" @keydown.enter.prevent="ask"
+               :disabled="activeConversation.asking"/>
+        <button class="primary" @click="ask"
+                :disabled="activeConversation.asking || !(activeConversation.draft || '').trim()">
+          {{ activeConversation.asking ? '回答中…' : '提问' }}
+        </button>
       </div>
     </section>
   </main>
@@ -133,23 +265,44 @@ const { createApp, ref, computed, nextTick, onMounted } = Vue;
 
 createApp({
   setup() {
+    // ---- 笔记 ----
     const notes = ref([]);
     const hasApiKey = ref(true);
-    const editorOpen = ref(false);
-    const form = ref({ id: null, title: '', content: '' });
+    const selectedNoteId = ref(null);
+    const editingNew = ref(false);
+    const emptyMetadata = () => ({ status: 'draft', category: '', issuer: '', documentNo: '', sourceUrl: '', publishedAt: '', effectiveFrom: '', effectiveTo: '', audience: '', campus: '', academicYear: '', version: '' });
+    const metadataOf = n => Object.fromEntries(Object.keys(emptyMetadata()).map(k => [k, n?.[k] ?? emptyMetadata()[k]]));
+    const form = ref({ id: null, title: '', content: '', metadata: emptyMetadata() });
+    const currentNote = computed(() => notes.value.find(n => n.id === form.value.id) || null);
     const saving = ref(false);
+    const importing = ref(false);
+    const fileInput = ref(null);
 
-    const question = ref('');
-    const asking = ref(false);
-    const lastQuestion = ref('');
-    const answer = ref('');
-    const sources = ref([]);
-    const errorMsg = ref('');
+    // ---- 详情：正文 / 分块 ----
+    const detailTab = ref('content');
+    const chunks = ref([]);
+    const highlightSeq = ref(null);
+    const chunkList = ref(null);
+
+    // ---- 会话 ----
+    const conversations = ref([]);
+    const activeConversationId = ref(null);
+    const activeConversation = computed(() =>
+      conversations.value.find(c => c.id === activeConversationId.value) || null);
+
     const chatBox = ref(null);
 
     marked.setOptions({ breaks: true, gfm: true });
-    const renderedAnswer = computed(() => answer.value ? marked.parse(answer.value) : '');
+    const render = (text) => text ? marked.parse(text) : '';
 
+    async function readError(res) {
+      const text = await res.text();
+      try { return JSON.parse(text).message || text; } catch { return text; }
+    }
+    function snippet(s) { return s.length > 180 ? s.slice(0, 180) + '…' : s; }
+    function formatTime(t) { return t ? String(t).replace('T', ' ').slice(0, 16) : ''; }
+
+    // ================= 笔记 =================
     async function loadNotes() {
       const res = await fetch('/api/notes');
       notes.value = await res.json();
@@ -160,16 +313,23 @@ createApp({
     }
 
     function newNote() {
-      form.value = { id: null, title: '', content: '' };
-      editorOpen.value = true;
+      editingNew.value = true;
+      selectedNoteId.value = null;
+      form.value = { id: null, title: '', content: '', metadata: emptyMetadata() };
+      detailTab.value = 'content';
+      chunks.value = [];
+      highlightSeq.value = null;
     }
 
     function openNote(id) {
       const n = notes.value.find(x => x.id === id);
-      if (n) {
-        form.value = { id: n.id, title: n.title, content: n.content };
-        editorOpen.value = true;
-      }
+      if (!n) return;
+      editingNew.value = false;
+      selectedNoteId.value = id;
+      form.value = { id: n.id, title: n.title, content: n.content, metadata: metadataOf(n) };
+      detailTab.value = 'content';
+      highlightSeq.value = null;
+      refreshChunks(id);   // 提前加载，页签上的分块数才是准的
     }
 
     async function saveNote() {
@@ -180,12 +340,16 @@ createApp({
         const res = await fetch(isUpdate ? '/api/notes/' + form.value.id : '/api/notes', {
           method: isUpdate ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: form.value.title, content: form.value.content })
+          body: JSON.stringify({ title: form.value.title, content: form.value.content,
+            metadata: Object.fromEntries(Object.entries(form.value.metadata).map(([k, v]) => [k, v || null])) })
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error(await readError(res));
         const saved = await res.json();
-        form.value = { id: saved.id, title: saved.title, content: saved.content };
+        form.value = { id: saved.id, title: saved.title, content: saved.content, metadata: metadataOf(saved) };
+        selectedNoteId.value = saved.id;
+        editingNew.value = false;
         await loadNotes();
+        await refreshChunks(saved.id);
       } catch (e) {
         alert('保存失败：' + e.message);
       } finally {
@@ -194,28 +358,175 @@ createApp({
     }
 
     async function deleteNote() {
-      if (!confirm('确认删除该笔记？其切片与向量索引将一并删除。')) return;
-      await fetch('/api/notes/' + form.value.id, { method: 'DELETE' });
-      form.value = { id: null, title: '', content: '' };
-      editorOpen.value = false;
+      if (!confirm('确认删除该规则？其切片与向量索引将一并删除。')) return;
+      const res = await fetch('/api/notes/' + form.value.id, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) { alert('删除失败：' + await readError(res)); return; }
+      editingNew.value = false;
+      selectedNoteId.value = null;
+      form.value = { id: null, title: '', content: '', metadata: emptyMetadata() };
       await loadNotes();
     }
 
+    async function pickFile() {
+      if (fileInput.value) fileInput.value.click();
+    }
+
+    async function importFile(e) {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';   // 清空以便同一文件可重复导入
+      if (!file) return;
+      importing.value = true;
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/notes/import', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error(await readError(res));
+        const saved = await res.json();
+        await loadNotes();
+        openNote(saved.id);
+      } catch (err) {
+        alert('导入失败：' + err.message);
+      } finally {
+        importing.value = false;
+      }
+    }
+
+    async function loadBundled() {
+      importing.value = true;
+      try {
+        const res = await fetch('/api/corpus/bootstrap', { method: 'POST' });
+        if (!res.ok) throw new Error(await readError(res));
+        const result = await res.json();
+        await loadNotes();
+        alert(result.join('\n'));
+      } catch (err) {
+        alert('加载失败：' + err.message);
+      } finally {
+        importing.value = false;
+      }
+    }
+
+    // ================= 分块 =================
+    async function loadChunks(noteId) {
+      const res = await fetch(`/api/notes/${noteId}/chunks`);
+      if (!res.ok) throw new Error(await readError(res));
+      chunks.value = await res.json();
+    }
+
+    /** 分块是辅助信息，加载失败不打断主流程 */
+    async function refreshChunks(noteId) {
+      if (!noteId) { chunks.value = []; return; }
+      try {
+        await loadChunks(noteId);
+      } catch (e) {
+        chunks.value = [];
+      }
+    }
+
+    function showChunks() {
+      detailTab.value = 'chunks';
+      refreshChunks(selectedNoteId.value);
+    }
+
+    /** 分块首行若是 ## 标题，作为所属小节显示 */
+    function sectionOf(c) {
+      const first = (c.content || '').split('\n')[0].trim();
+      return first.startsWith('## ') ? first.slice(3) : /^第.+[章节条]/.test(first) ? first : '';
+    }
+
+    /** 引用跳转：切到该笔记 → 打开分块页签 → 滚动并高亮命中分块 */
+    async function jumpToChunk(noteId, seq) {
+      const n = notes.value.find(x => x.id === noteId);
+      if (!n) { alert('引用的规则已不存在（可能已被删除）'); return; }
+      selectedNoteId.value = noteId;
+      editingNew.value = false;
+      form.value = { id: n.id, title: n.title, content: n.content, metadata: metadataOf(n) };
+      detailTab.value = 'chunks';
+      highlightSeq.value = seq;
+      try {
+        await loadChunks(noteId);
+      } catch (e) {
+        alert('加载分块失败：' + e.message);
+        return;
+      }
+      nextTick(() => {
+        const el = chunkList.value && chunkList.value.querySelector('[data-seq="' + seq + '"]');
+        if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      });
+    }
+
+    // ================= 会话 =================
+    async function loadConversations() {
+      const res = await fetch('/api/conversations');
+      const list = await res.json();
+      conversations.value = list.map(c => ({
+        ...c, messages: [], draft: '', asking: false, error: '', loaded: false
+      }));
+      if (conversations.value.length) {
+        await selectConversation(conversations.value[0].id);
+      }
+    }
+
+    async function createConversation() {
+      const res = await fetch('/api/conversations', { method: 'POST' });
+      if (!res.ok) { alert('新建会话失败：' + await readError(res)); return; }
+      const conv = await res.json();
+      conversations.value.unshift({ ...conv, messages: [], draft: '', asking: false, error: '', loaded: true });
+      activeConversationId.value = conv.id;
+    }
+
+    async function selectConversation(id) {
+      activeConversationId.value = id;
+      const conv = conversations.value.find(c => c.id === id);
+      if (conv && !conv.loaded) {
+        try {
+          const res = await fetch(`/api/conversations/${id}/messages`);
+          conv.messages = res.ok ? await res.json() : [];
+        } catch (e) {
+          conv.messages = [];
+        }
+        conv.loaded = true;
+      }
+      scrollChat();
+    }
+
+    async function deleteConversation(id) {
+      if (!confirm('确认删除该会话及其全部消息？')) return;
+      const res = await fetch('/api/conversations/' + id, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) { alert('删除失败：' + await readError(res)); return; }
+      const idx = conversations.value.findIndex(c => c.id === id);
+      if (idx >= 0) conversations.value.splice(idx, 1);
+      if (activeConversationId.value === id) {
+        activeConversationId.value = null;
+        if (conversations.value.length) await selectConversation(conversations.value[0].id);
+      }
+    }
+
+    /**
+     * 提问。整个流程绑定在会话对象上（而不是全局状态），
+     * 因此切到别的会话时，这个会话的流式回答会继续写入它自己。
+     */
     async function ask() {
-      const q = question.value.trim();
-      if (!q || asking.value) return;
-      asking.value = true;
-      lastQuestion.value = q;
-      answer.value = '';
-      sources.value = [];
-      errorMsg.value = '';
+      const conv = activeConversation.value;
+      if (!conv || conv.asking) return;
+      const question = (conv.draft || '').trim();
+      if (!question) return;
+
+      conv.draft = '';
+      conv.error = '';
+      conv.asking = true;
+      conv.messages.push({ id: 'u' + Date.now(), role: 'user', content: question, sources: [] });
+      const reply = { id: 'a' + Date.now(), role: 'assistant', content: '', sources: [] };
+      conv.messages.push(reply);
+      scrollChat();
+
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: q })
+          body: JSON.stringify({ conversationId: conv.id, question })
         });
-        if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+        if (!res.ok || !res.body) throw new Error(await readError(res));
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buf = '';
@@ -225,20 +536,25 @@ createApp({
           buf += decoder.decode(value, { stream: true });
           let idx;
           while ((idx = buf.indexOf('\n\n')) >= 0) {
-            handleEventBlock(buf.slice(0, idx));
+            handleEventBlock(buf.slice(0, idx), conv, reply);
             buf = buf.slice(idx + 2);
           }
         }
-        if (buf.trim()) handleEventBlock(buf);
+        if (buf.trim()) handleEventBlock(buf, conv, reply);
+        // 后端会用首条提问给会话命名，这里同步显示
+        if (conv.title === '新会话') {
+          conv.title = question.length > 30 ? question.slice(0, 30) : question;
+        }
+        conv.updatedAt = new Date().toISOString();
       } catch (e) {
-        if (!errorMsg.value) errorMsg.value = '请求失败：' + e.message;
+        if (!conv.error) conv.error = '请求失败：' + e.message;
       } finally {
-        asking.value = false;
-        scrollChat();
+        conv.asking = false;
+        if (conv === activeConversation.value) scrollChat();
       }
     }
 
-    function handleEventBlock(block) {
+    function handleEventBlock(block, conv, reply) {
       let event = 'message';
       let data = '';
       for (const line of block.split('\n')) {
@@ -248,13 +564,14 @@ createApp({
       if (!data) return;
       let payload;
       try { payload = JSON.parse(data); } catch { return; }
+
       if (event === 'sources') {
-        sources.value = payload;
+        reply.sources = payload;
       } else if (event === 'delta') {
-        answer.value += payload.text;
-        scrollChat();
+        reply.content += payload.text;
+        if (conv === activeConversation.value) scrollChat();
       } else if (event === 'error') {
-        errorMsg.value = payload.message;
+        conv.error = payload.message;
       }
       // done：无附加处理
     }
@@ -265,15 +582,19 @@ createApp({
       });
     }
 
-    function snippet(s) { return s.length > 180 ? s.slice(0, 180) + '…' : s; }
-    function formatTime(t) { return t ? String(t).replace('T', ' ').slice(0, 16) : ''; }
-
-    onMounted(() => { loadNotes(); loadConfig(); });
+    onMounted(async () => {
+      await loadNotes();
+      loadConfig();
+      await loadConversations();
+    });
 
     return {
-      notes, hasApiKey, editorOpen, form, saving,
-      question, asking, lastQuestion, answer, sources, errorMsg, chatBox,
-      renderedAnswer, newNote, openNote, saveNote, deleteNote, ask, snippet, formatTime
+      notes, hasApiKey, selectedNoteId, editingNew, form, currentNote, saving, importing, fileInput,
+      detailTab, chunks, highlightSeq, chunkList,
+      conversations, activeConversationId, activeConversation, chatBox,
+      render, newNote, openNote, saveNote, deleteNote, pickFile, importFile, loadBundled,
+      showChunks, sectionOf, jumpToChunk,
+      createConversation, selectConversation, deleteConversation, ask, snippet, formatTime
     };
   }
 }).mount('#app');

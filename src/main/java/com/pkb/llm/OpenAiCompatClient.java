@@ -46,8 +46,8 @@ public class OpenAiCompatClient implements ChatClient, EmbeddingClient {
         this.mapper = mapper;
     }
 
-    private void requireApiKey() {
-        if (props.getApiKey() == null || props.getApiKey().isBlank()) {
+    private void requireApiKey(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("未配置 LLM API Key（请设置环境变量 LLM_API_KEY 后重启）");
         }
     }
@@ -55,7 +55,7 @@ public class OpenAiCompatClient implements ChatClient, EmbeddingClient {
     @Override
     @SuppressWarnings("unchecked")
     public List<float[]> embedBatch(List<String> texts) {
-        requireApiKey();
+        requireApiKey(props.getApiKey());
         if (texts.isEmpty()) {
             return List.of();
         }
@@ -102,16 +102,16 @@ public class OpenAiCompatClient implements ChatClient, EmbeddingClient {
     @Override
     @SuppressWarnings("unchecked")
     public void stream(String systemPrompt, String userPrompt, Listener listener) throws Exception {
-        requireApiKey();
+        requireApiKey(props.getChatApiKey());
         Map<String, Object> body = Map.of(
                 "model", props.getChatModel(),
                 "stream", true,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userPrompt)));
-        HttpRequest request = HttpRequest.newBuilder(URI.create(props.getApiBaseUrl() + "/chat/completions"))
+        HttpRequest request = HttpRequest.newBuilder(URI.create(props.getChatApiBaseUrl() + "/chat/completions"))
                 .timeout(Duration.ofSeconds(300))
-                .header("Authorization", "Bearer " + props.getApiKey())
+                .header("Authorization", "Bearer " + props.getChatApiKey())
                 .header("Content-Type", "application/json")
                 .header("Accept", "text/event-stream")
                 .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body), StandardCharsets.UTF_8))
@@ -162,5 +162,39 @@ public class OpenAiCompatClient implements ChatClient, EmbeddingClient {
 
     private String truncate(String s, int max) {
         return s.length() <= max ? s : s.substring(0, max) + "…";
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public String complete(String model, String systemPrompt, String userPrompt,
+                           double temperature, double topP, long timeoutMs) throws Exception {
+        requireApiKey(props.getChatApiKey());
+        Map<String, Object> body = Map.of(
+                "model", model != null ? model : props.getChatModel(),
+                "stream", false,
+                "temperature", temperature,
+                "top_p", topP,
+                "messages", List.of(
+                        Map.of("role", "system", "content", systemPrompt),
+                        Map.of("role", "user", "content", userPrompt)));
+        HttpRequest request = HttpRequest.newBuilder(URI.create(props.getChatApiBaseUrl() + "/chat/completions"))
+                .timeout(Duration.ofMillis(Math.max(500, timeoutMs)))
+                .header("Authorization", "Bearer " + props.getChatApiKey())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body), StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException("LLM 调用失败 HTTP " + response.statusCode() + ": "
+                    + truncate(response.body(), 300));
+        }
+        Map<String, Object> event = mapper.readValue(response.body(), Map.class);
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) event.get("choices");
+        if (choices == null || choices.isEmpty()) {
+            throw new IllegalStateException("LLM 返回缺少 choices: " + truncate(response.body(), 200));
+        }
+        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+        Object content = message == null ? null : message.get("content");
+        return content instanceof String text ? text : "";
     }
 }

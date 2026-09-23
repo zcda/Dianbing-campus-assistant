@@ -1,25 +1,94 @@
 spring:
   application:
     name: pkb
+  servlet:
+    multipart:
+      # 文件导入上限（Spring Boot 默认单文件仅 1MB，不放宽会直接 413）
+      max-file-size: 20MB
+      max-request-size: 25MB
   datasource:
     url: ${PKB_DB_URL:jdbc:postgresql://localhost:5432/pkb}
     username: ${PKB_DB_USER:pkb}
     password: ${PKB_DB_PASSWORD:pkb123}
 
 server:
+  address: ${RAG_BIND_ADDRESS:127.0.0.1}
   port: 8080
+  error:
+    # Spring Boot 3 默认不返回异常 message，前端拿不到"不支持的文件类型"这类可读提示
+    include-message: always
 
 rag:
+  official-domain: ${RAG_OFFICIAL_DOMAIN:uestc.edu.cn}
   # OpenAI 兼容服务基地址（默认本地 Ollama；对接云 API 时用环境变量 RAG_API_BASE_URL 覆盖）
   api-base-url: ${RAG_API_BASE_URL:http://localhost:11434/v1}
   # Ollama 无需鉴权，占位 "ollama" 即可；对接云 API 时设置环境变量 LLM_API_KEY 覆盖
   api-key: ${LLM_API_KEY:ollama}
-  # 对话模型：本地 llama3.1:8b（ollama pull llama3.1:8b）
+  # 可选：仅让对话/改写走云端快速模型，向量仍用上面的本地 Ollama。
+  chat-api-base-url: ${RAG_CHAT_API_BASE_URL:}
+  chat-api-key: ${RAG_CHAT_API_KEY:}
+  # 默认本地 llama3.1:8b；云端对话可改为 deepseek-v4-flash 等 OpenAI 兼容模型。
   chat-model: ${RAG_CHAT_MODEL:llama3.1:8b}
-  # 向量模型：bge-m3，1024 维、中英文表现好（ollama pull bge-m3）。注意 llama3.1 是生成模型，不能做向量化
+  # 向量模型：bge-m3，1024 维（ollama pull bge-m3）
   embedding-model: ${RAG_EMBEDDING_MODEL:bge-m3}
   embedding-dimension: 1024
-  # 检索返回的片段数
-  top-k: 5
-  # 余弦相似度阈值：低于该值视为不相关，直接回答"未找到"，不调用 LLM
-  min-similarity: 0.30
+  # 拒答兜底话术（单一事实来源：护栏/闸门/Prompt 规则 3/评测判据全部引用这一份）
+  not-found-answer: "未找到足以回答该问题的当前有效校园规则。请核对身份、校区或学年，并查看学校官方文件。"
+  # 当前版本是公开规则库：身份/校区/学年只作为规则适用范围展示，不做登录权限过滤。
+  # 后续接入统一身份认证后，再增加 access-context 和按库/规则的权限策略。
+
+  # —— 召回 ——
+  top-k: 5                    # 最终送进 Prompt 的片段数
+  # 向量通道 SQL 层单条过滤（省 IO，拦截明显不相关单条；"是否调 LLM"由批级闸门决定）
+  # 暂沿用旧语料阈值 0.50；校园语料须运行 RetrievalEvalTest、GateSweepTest 后重新定标。
+  min-similarity: 0.50
+  retrieval:
+    candidate-limit: 20       # 每通道扩池上限，必须 > top-k（粗排扩池 + 闸门精选）
+
+  channels:
+    vector:  { enabled: true }
+    keyword: { enabled: true, tokenizer: bigram, weight: 0.6 }
+
+  # —— 融合（D3）——
+  fusion:
+    strategy: rrf             # rrf | none
+    rrf-k: 60
+    channel-weights: { vector: 1.0, keyword: 0.6 }   # 关键词通道新接入先降权，防噪声靠名次抢前排
+
+  # —— 批级证据闸门（D4）——
+  evidence:
+    mode: batch               # batch（整批判）| none（关闭）
+    min-gate-score: 0.50      # 本批 max(gateScore) 下限，<=0 关闭；不过线整批丢弃、不调 LLM
+    on-missing-score: allow   # 无分可读时 fail-open 放行 + WARN（降级路径绝不制造假阴性）
+
+  # —— 分块预算（D5）——
+  chunk:
+    strategy: rule            # rule | heading | fixed；条款边界优先
+    max-chars: 1024           # 目标而非硬上限：防语义稀释靠章节边界而非把块压小
+    overlap-chars: 128        # = max-chars/8：重叠同时是回退找句末标点的最大距离
+    tolerance-factor: 3       # 允许超出 max-chars 的倍数（切开语义单元代价更高），硬上限封顶 8192
+    rows-per-chunk: 50
+
+  # —— 查询改写 + 多问句拆分（D6）——
+  rewrite:
+    enabled: true
+    max-sub-questions: 3
+    temperature: 0.1          # 改写要稳定不要发散
+    top-p: 0.3
+    # 仅复合问句（并列连词/多问号）才触发 LLM 改写（R4 规则预判）；
+    # 本地 8B 模型生成 JSON 实测 10~20s，超时即走规则切分兜底
+    timeout-ms: 15000
+  term-mapping:
+    enabled: false            # P2：词表归一（query_term_mapping 表），纯规则零 token
+
+  # —— 异步索引（D9）——
+  index:
+    async-enabled: true
+    max-retry: 3
+    worker-threads: 1
+    retry-backoff-ms: 2000
+
+  # —— 评测（仅测试用，D7）——
+  eval:
+    dataset: /eval/campus_eval_v1.jsonl
+    judge-model: qwen3:14b    # judge 与生产不同模型，避免自己评自己

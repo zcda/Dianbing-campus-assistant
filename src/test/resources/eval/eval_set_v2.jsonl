@@ -1,0 +1,120 @@
+{"query_id": "E01", "query": "Minor GC 和 Full GC 分别在什么情况下触发？", "expected_chunks": ["5:0"], "expected_nice": ["14:57"], "requires_rag": true, "category": "jvm", "note": "复合问题，D6 改写拆分验收样本（v1 基线 Hit@5=0）"}
+{"query_id": "E02", "query": "JVM 堆的新生代由哪几部分组成？", "expected_chunks": ["5:0"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "Eden + 两个 Survivor"}
+{"query_id": "E03", "query": "对象优先在堆的哪个区域分配内存？", "expected_chunks": ["5:0"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "Eden"}
+{"query_id": "E04", "query": "JDK9 起的默认垃圾收集器是什么？", "expected_chunks": ["5:1"], "expected_nice": ["6:4"], "requires_rag": true, "category": "jvm", "note": "G1"}
+{"query_id": "E05", "query": "哪些垃圾收集器的停顿时间比较短？", "expected_chunks": ["5:1"], "expected_nice": ["6:0", "6:3"], "requires_rag": true, "category": "jvm", "note": "CMS 低停顿 / ZGC 亚毫秒"}
+{"query_id": "E06", "query": "ZGC 的停顿时间能达到什么水平？", "expected_chunks": ["5:1"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "亚毫秒级"}
+{"query_id": "E07", "query": "CMS 采用什么垃圾回收算法？会产生什么问题？", "expected_chunks": ["6:1"], "expected_nice": ["6:0"], "requires_rag": true, "category": "jvm", "note": "复合问题：标记-清除 + 碎片退化 Full GC"}
+{"query_id": "E08", "query": "G1 是怎么避免内存碎片的？", "expected_chunks": ["6:1"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "标记-整理 + Region 间复制（v1 信号下限样本 0.608）"}
+{"query_id": "E09", "query": "G1 把堆划分成大约多少个 Region？", "expected_chunks": ["6:2"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "约 2048 个"}
+{"query_id": "E10", "query": "G1 的 Region 可以动态扮演哪些角色？", "expected_chunks": ["6:2"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "Eden/Survivor/Old/Humongous"}
+{"query_id": "E11", "query": "CMS 和 G1 在堆布局上有什么区别？", "expected_chunks": ["6:2"], "expected_nice": ["6:0"], "requires_rag": true, "category": "jvm", "note": "物理分代 vs Region 化"}
+{"query_id": "E12", "query": "G1 是如何实现可预测的停顿时间的？", "expected_chunks": ["6:3"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "停顿预测模型"}
+{"query_id": "E13", "query": "G1 默认的停顿时间目标是多少毫秒？", "expected_chunks": ["6:3"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "MaxGCPauseMillis 200ms"}
+{"query_id": "E14", "query": "Garbage First 这个名字是怎么来的？", "expected_chunks": ["6:3"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "优先回收垃圾最多的 Region"}
+{"query_id": "E15", "query": "CMS 只能搭配哪个新生代收集器使用？", "expected_chunks": ["6:4"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "ParNew"}
+{"query_id": "E16", "query": "CMS 是在哪个 JDK 版本被正式移除的？", "expected_chunks": ["6:4"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "JDK14"}
+{"query_id": "E17", "query": "Java 中常见的 OOM 类型有哪些？", "expected_chunks": ["7:0"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "heap space/Metaspace/Direct buffer/GC overhead"}
+{"query_id": "E18", "query": "Metaspace 溢出一般是什么原因？", "expected_chunks": ["7:0"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "类元数据超限"}
+{"query_id": "E19", "query": "GC overhead limit exceeded 是什么意思？", "expected_chunks": ["7:0"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "GC 占用 CPU 过高"}
+{"query_id": "E20", "query": "排查 OOM 的第一步应该加什么参数？", "expected_chunks": ["7:1"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "HeapDumpOnOutOfMemoryError"}
+{"query_id": "E21", "query": "用 MAT 分析堆快照主要看什么？", "expected_chunks": ["7:1"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "Dominator Tree 找大对象"}
+{"query_id": "E22", "query": "jstat -gcutil 用来观察什么指标？", "expected_chunks": ["7:1"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "GC 频率与回收效果"}
+{"query_id": "E23", "query": "什么是缓存穿透？怎么解决？", "expected_chunks": ["8:0"], "expected_nice": ["14:250"], "requires_rag": true, "category": "cache", "note": "复合问题：空对象 + 布隆过滤器"}
+{"query_id": "E24", "query": "什么是缓存击穿？有哪些解决方案？", "expected_chunks": ["8:1"], "expected_nice": ["14:122"], "requires_rag": true, "category": "cache", "note": "互斥锁/逻辑过期"}
+{"query_id": "E25", "query": "缓存雪崩是什么意思？怎么避免大量 Key 同时过期？", "expected_chunks": ["8:2"], "expected_nice": [], "requires_rag": true, "category": "cache", "note": "复合问题：随机过期时间/集群/降级限流"}
+{"query_id": "E26", "query": "布隆过滤器在缓存场景里起什么作用？", "expected_chunks": ["8:0"], "expected_nice": ["14:250"], "requires_rag": true, "category": "cache", "note": "拦截穿透查询"}
+{"query_id": "E27", "query": "热点 Key 失效瞬间的海量并发请求怎么处理？", "expected_chunks": ["8:1"], "expected_nice": ["14:122"], "requires_rag": true, "category": "cache", "note": "SETNX 互斥锁 + 逻辑过期"}
+{"query_id": "E28", "query": "缓存空对象的方案要注意什么？", "expected_chunks": ["8:0"], "expected_nice": [], "requires_rag": true, "category": "cache", "note": "设置较短过期时间"}
+{"query_id": "E29", "query": "Kimi K3 的参数规模和上下文长度是多少？", "expected_chunks": ["13:2"], "expected_nice": ["13:1"], "requires_rag": true, "category": "agent", "note": "2.8 万亿参数、100 万上下文"}
+{"query_id": "E30", "query": "豆包的日均 Token 消耗有多少？", "expected_chunks": ["13:1"], "expected_nice": ["13:9"], "requires_rag": true, "category": "agent", "note": "180 万亿"}
+{"query_id": "E31", "query": "千问 App 的 MAU 达到了多少？", "expected_chunks": ["13:2"], "expected_nice": ["13:9"], "requires_rag": true, "category": "agent", "note": "1.67 亿"}
+{"query_id": "E32", "query": "智谱是什么时候在港交所上市的？", "expected_chunks": ["13:4"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "2026-01-08"}
+{"query_id": "E33", "query": "MiniMax 最新的 ARR 突破了多少钱？", "expected_chunks": ["13:5"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "8 亿美元"}
+{"query_id": "E34", "query": "Manus 被监管叫停的事件经过是怎样的？", "expected_chunks": ["13:5"], "expected_nice": ["13:12"], "requires_rag": true, "category": "agent", "note": "发改委禁止投资决定"}
+{"query_id": "E35", "query": "豆包手机一代为什么被银行风控？", "expected_chunks": ["13:6"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "INJECT_EVENTS 系统级权限硬闯"}
+{"query_id": "E36", "query": "荣耀 MagicOS 的 A2A 实测情况如何？", "expected_chunks": ["13:6"], "expected_nice": ["13:5"], "requires_rag": true, "category": "agent", "note": "微信 A2A 唯一实测可用"}
+{"query_id": "E37", "query": "阿里云百炼 Managed Agents 是怎么计费的？", "expected_chunks": ["13:7"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "会话运行时 0.5 元/小时"}
+{"query_id": "E38", "query": "腾讯云 ADP 的私有化 License 一年多少钱？", "expected_chunks": ["13:7"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "80 万元/年"}
+{"query_id": "E39", "query": "银行落地智能体有哪些实际案例？", "expected_chunks": ["13:8"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "工行工小审/建行帮得等"}
+{"query_id": "E40", "query": "网商银行的百灵 2.0 有什么成效？", "expected_chunks": ["13:8"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "千里眼误处置-40% 等"}
+{"query_id": "E41", "query": "2026 年中国企业级智能体的市场规模预计是多少？", "expected_chunks": ["13:9"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "IDC 449 亿元"}
+{"query_id": "E42", "query": "DeepSeek 在 API 层的份额有多高？", "expected_chunks": ["13:9"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "86.8%"}
+{"query_id": "E43", "query": "智能体领域第一个顶层设计文件是什么？", "expected_chunks": ["13:10"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "《智能体规范应用与创新发展实施意见》"}
+{"query_id": "E44", "query": "金融领域的 KYA 自律公约指的是什么？", "expected_chunks": ["13:10"], "expected_nice": [], "requires_rag": true, "category": "agent", "note": "Know Your Agent"}
+{"query_id": "E45", "query": "情感陪伴 App 冒泡鸭的下场如何？", "expected_chunks": ["13:11"], "expected_nice": ["13:5"], "requires_rag": true, "category": "agent", "note": "停服"}
+{"query_id": "E46", "query": "OpenClaw 的安全预警提到了哪些风险？", "expected_chunks": ["13:10"], "expected_nice": ["13:11"], "requires_rag": true, "category": "agent", "note": "技能包投毒/公网暴露等"}
+{"query_id": "E47", "query": "String、StringBuilder、StringBuffer 有什么区别？", "expected_chunks": ["14:27"], "expected_nice": [], "requires_rag": true, "category": "javase", "note": "String 不可变等"}
+{"query_id": "E48", "query": "== 和 equals 的区别是什么？", "expected_chunks": ["14:31"], "expected_nice": [], "requires_rag": true, "category": "javase", "note": "基本类型数值/引用类型地址"}
+{"query_id": "E49", "query": "深拷贝和浅拷贝的区别是什么？", "expected_chunks": ["14:34"], "expected_nice": [], "requires_rag": true, "category": "javase", "note": "对比表"}
+{"query_id": "E50", "query": "ArrayList 和 LinkedList 的区别是什么？", "expected_chunks": ["14:37"], "expected_nice": ["14:40"], "requires_rag": true, "category": "collection", "note": "底层数据结构差异"}
+{"query_id": "E51", "query": "ConcurrentHashMap 是怎么保证线程安全的？", "expected_chunks": ["14:39"], "expected_nice": ["14:45"], "requires_rag": true, "category": "concurrency", "note": "D2 术语精确匹配验收样本：弃分段锁改 CAS+synchronized"}
+{"query_id": "E52", "query": "ScheduledThreadPool 使用什么工作队列？", "expected_chunks": ["14:64"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "DelayedWorkQueue"}
+{"query_id": "E53", "query": "线程池的队列满了之后会发生什么？", "expected_chunks": ["14:66"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "拒绝策略等"}
+{"query_id": "E54", "query": "ThreadLocal 为什么会内存泄漏？", "expected_chunks": ["14:70"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "D2 术语精确匹配验收样本：Entry 的 key 弱引用"}
+{"query_id": "E55", "query": "AQS 内部用什么队列管理等待线程？", "expected_chunks": ["14:72"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "CLH 队列"}
+{"query_id": "E56", "query": "公平锁和非公平锁在底层是怎么实现的？", "expected_chunks": ["14:74"], "expected_nice": ["14:72"], "requires_rag": true, "category": "concurrency", "note": "tryAcquire 时机差异"}
+{"query_id": "E57", "query": "synchronized 修饰实例方法时锁的是哪个对象？", "expected_chunks": ["14:81"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "this"}
+{"query_id": "E58", "query": "为什么生产中不建议用 Executors 创建线程池？", "expected_chunks": ["14:80"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "标题题"}
+{"query_id": "E59", "query": "explain 执行计划的 type 字段有哪些取值？", "expected_chunks": ["14:85"], "expected_nice": [], "requires_rag": true, "category": "mysql", "note": "system/const/eq_ref/ref 等"}
+{"query_id": "E60", "query": "聚簇索引和非聚簇索引有什么区别？", "expected_chunks": ["14:86"], "expected_nice": ["14:90"], "requires_rag": true, "category": "mysql", "note": "非主键用非聚簇索引等"}
+{"query_id": "E61", "query": "联合索引的最左前缀原则是什么？", "expected_chunks": ["14:87"], "expected_nice": ["14:92"], "requires_rag": true, "category": "mysql", "note": "不能跳过中间列"}
+{"query_id": "E62", "query": "水平分表和垂直分表的区别是什么？", "expected_chunks": ["14:93"], "expected_nice": ["14:95"], "requires_rag": true, "category": "mysql", "note": "按行拆分 vs 按列拆分"}
+{"query_id": "E63", "query": "MVCC 是怎么实现非锁定读的？", "expected_chunks": ["14:98"], "expected_nice": [], "requires_rag": true, "category": "mysql", "note": "undo log 构造历史版本"}
+{"query_id": "E64", "query": "MyBatis 的 #{} 为什么能防止 SQL 注入？", "expected_chunks": ["14:107"], "expected_nice": [], "requires_rag": true, "category": "mysql", "note": "预编译占位"}
+{"query_id": "E65", "query": "Redis 为什么这么快？", "expected_chunks": ["14:113"], "expected_nice": ["14:114"], "requires_rag": true, "category": "redis", "note": "内存 + IO 多路复用 + 单线程"}
+{"query_id": "E66", "query": "Redis 的过期删除策略是什么？", "expected_chunks": ["14:117"], "expected_nice": [], "requires_rag": true, "category": "redis", "note": "惰性 + 定期"}
+{"query_id": "E67", "query": "Redis 内存满了会怎么淘汰数据？", "expected_chunks": ["14:127"], "expected_nice": [], "requires_rag": true, "category": "redis", "note": "volatile-lru 等八种策略"}
+{"query_id": "E68", "query": "大 Key 和热 Key 各有什么危害？怎么处理？", "expected_chunks": ["14:122"], "expected_nice": ["8:1"], "requires_rag": true, "category": "redis", "note": "复合问题"}
+{"query_id": "E69", "query": "哨兵的主观下线和客观下线是什么意思？", "expected_chunks": ["14:209"], "expected_nice": [], "requires_rag": true, "category": "redis", "note": "哨兵投票机制"}
+{"query_id": "E70", "query": "Redisson 的看门狗是怎么续期的？", "expected_chunks": ["14:210"], "expected_nice": [], "requires_rag": true, "category": "redis", "note": "分布式锁自动续期"}
+{"query_id": "E71", "query": "Spring 的 @Transactional 什么时候会失效？", "expected_chunks": ["14:131"], "expected_nice": [], "requires_rag": true, "category": "spring", "note": "final 方法无法代理等"}
+{"query_id": "E72", "query": "读已提交隔离级别能防止什么问题？", "expected_chunks": ["14:88"], "expected_nice": ["14:98"], "requires_rag": true, "category": "mysql", "note": "防脏读"}
+{"query_id": "E73", "query": "Spring Boot 的自动配置原理是什么？", "expected_chunks": ["14:135"], "expected_nice": ["14:255"], "requires_rag": true, "category": "spring", "note": "@EnableAutoConfiguration"}
+{"query_id": "E74", "query": "Spring Bean 的生命周期初始化过程是怎样的？", "expected_chunks": ["14:136"], "expected_nice": [], "requires_rag": true, "category": "spring", "note": "initialization 方法后对外服务"}
+{"query_id": "E75", "query": "Kafka 为什么能达到百万级 TPS？", "expected_chunks": ["14:140"], "expected_nice": [], "requires_rag": true, "category": "mq", "note": "顺序读写 + 零拷贝"}
+{"query_id": "E76", "query": "怎么保证消息不被重复消费？", "expected_chunks": ["14:144"], "expected_nice": [], "requires_rag": true, "category": "mq", "note": "幂等设计"}
+{"query_id": "E77", "query": "RocketMQ 事务消息的半消息流程是怎样的？", "expected_chunks": ["14:147"], "expected_nice": [], "requires_rag": true, "category": "mq", "note": "半消息 + 本地事务 + 回查"}
+{"query_id": "E78", "query": "延迟消息在 RabbitMQ 和 RocketMQ 里分别怎么实现？", "expected_chunks": ["14:150"], "expected_nice": [], "requires_rag": true, "category": "mq", "note": "复合问题"}
+{"query_id": "E79", "query": "ARP 协议是做什么的？", "expected_chunks": ["14:167"], "expected_nice": [], "requires_rag": true, "category": "network", "note": "IP 解析物理地址"}
+{"query_id": "E80", "query": "TCP 的拥塞控制包含哪些机制？", "expected_chunks": ["14:170"], "expected_nice": [], "requires_rag": true, "category": "network", "note": "慢启动/拥塞避免等"}
+{"query_id": "E81", "query": "HTTP 和 HTTPS 的区别是什么？", "expected_chunks": ["14:173"], "expected_nice": [], "requires_rag": true, "category": "network", "note": "SSL/TLS 加密"}
+{"query_id": "E82", "query": "Spring 是怎么解决循环依赖的？三级缓存是什么？", "expected_chunks": ["14:137"], "expected_nice": [], "requires_rag": true, "category": "spring", "note": "复合问题，实测在库（原拟库外被验证纠正）"}
+{"query_id": "E83", "query": "InnoDB 是怎么防止幻读的？", "expected_chunks": ["14:98"], "expected_nice": ["14:278"], "requires_rag": true, "category": "mysql", "note": "行锁 + 间隙锁（实测在库）"}
+{"query_id": "E84", "query": "为什么 TCP 握手是三次而不是两次？", "expected_chunks": ["14:166"], "expected_nice": [], "requires_rag": true, "category": "network", "note": "实测在库"}
+{"query_id": "E85", "query": "Redis Cluster 的 Hash Tag 是干什么的？", "expected_chunks": ["14:223"], "expected_nice": [], "requires_rag": true, "category": "redis", "note": "实测在库：key 加 {tag} 同 slot"}
+{"query_id": "E86", "query": "布隆过滤器的底层实现是什么？它支持删除吗？", "expected_chunks": ["14:250"], "expected_nice": ["8:0", "14:299"], "requires_rag": true, "category": "design", "note": "复合问题：位数组 + 多哈希；不支持删除"}
+{"query_id": "E87", "query": "分布式系统里怎么设计全局唯一 ID？", "expected_chunks": ["14:240"], "expected_nice": [], "requires_rag": true, "category": "design", "note": "UUID/数据库/雪花对比"}
+{"query_id": "E88", "query": "Java 集合的快速失败机制是什么？", "expected_chunks": ["14:253"], "expected_nice": [], "requires_rag": true, "category": "collection", "note": "Fail-Fast 并发修改"}
+{"query_id": "E89", "query": "GC Roots 都包括哪些对象？", "expected_chunks": ["14:49"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "栈引用/静态属性/常量"}
+{"query_id": "E90", "query": "双亲委派机制是在哪个方法里实现的？", "expected_chunks": ["14:53"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "loadClass()"}
+{"query_id": "E91", "query": "怎么打印 GC 日志？用什么参数？", "expected_chunks": ["14:60"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "PrintGCDetails 等"}
+{"query_id": "E92", "query": "JUC 是什么？包含哪些组件？", "expected_chunks": ["14:63"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "并发工具包"}
+{"query_id": "E93", "query": "老年代一般采用什么垃圾回收算法？为什么？", "expected_chunks": ["14:57"], "expected_nice": [], "requires_rag": true, "category": "jvm", "note": "标记-清除/标记-整理"}
+{"query_id": "E94", "query": "synchronized 和 ReentrantLock 的可重入是怎么实现的？", "expected_chunks": ["14:76"], "expected_nice": [], "requires_rag": true, "category": "concurrency", "note": "复合问题：计数/持有者"}
+{"query_id": "E95", "query": "先更新数据库再删缓存，删除失败怎么办？", "expected_chunks": ["14:219"], "expected_nice": [], "requires_rag": true, "category": "cache", "note": "重试/补偿"}
+{"query_id": "E96", "query": "一致性哈希解决什么问题？虚拟节点有什么用？", "expected_chunks": ["14:198"], "expected_nice": [], "requires_rag": true, "category": "design", "note": "复合问题"}
+{"query_id": "E97", "query": "秒杀的库存扣减怎么防止超卖？", "expected_chunks": ["14:221"], "expected_nice": [], "requires_rag": true, "category": "design", "note": "乐观锁 update stock where"}
+{"query_id": "E98", "query": "死锁产生的四个必要条件是什么？", "expected_chunks": ["14:180"], "expected_nice": [], "requires_rag": true, "category": "os", "note": "互斥/保持等待/不剥夺/循环等待"}
+{"query_id": "E99", "query": "用户态切换到内核态有哪些触发方式？", "expected_chunks": ["14:185"], "expected_nice": [], "requires_rag": true, "category": "os", "note": "系统调用/中断/异常"}
+{"query_id": "E100", "query": "进程的基本状态转换是怎样的？", "expected_chunks": ["14:178"], "expected_nice": [], "requires_rag": true, "category": "os", "note": "就绪/运行/阻塞"}
+{"query_id": "N01", "query": "Go 的 goroutine 调度模型 GMP 是怎么回事？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Go 全库零内容"}
+{"query_id": "N02", "query": "Python 的 GIL 是什么？对多线程有什么影响？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Python 全库零内容"}
+{"query_id": "N03", "query": "Docker 有哪几种网络模式？分别用于什么场景？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Docker 零内容"}
+{"query_id": "N04", "query": "Java 泛型的类型擦除是什么？会带来什么问题？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：类型擦除零内容，主题邻近"}
+{"query_id": "N05", "query": "Rust 的所有权和借用机制是怎么回事？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Rust 零内容"}
+{"query_id": "N06", "query": "Kubernetes 的 Pod 调度策略有哪些？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：K8s 仅在扩容语境出现一词"}
+{"query_id": "N07", "query": "nginx 有哪些负载均衡策略？各适合什么场景？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：nginx 仅在限流语境出现一词"}
+{"query_id": "N08", "query": "Solr 和 Elasticsearch 有什么区别？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Solr 零内容，ES 仅在对比标题"}
+{"query_id": "N09", "query": "Kafka 的 exactly-once 语义是怎么实现的？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：ISR 有内容但 exactly-once 机制无"}
+{"query_id": "N10", "query": "ZooKeeper 的 ZAB 协议工作流程是怎样的？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：ZK 仅在分布式锁语境出现"}
+{"query_id": "N11", "query": "TLS 1.3 相比 TLS 1.2 在握手上有什么改进？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：HTTPS 有内容但版本差异无"}
+{"query_id": "N12", "query": "JVM 的 JIT 分层编译模型 C1 和 C2 是怎么回事？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：JIT 零内容，主题强邻近"}
+{"query_id": "N13", "query": "MySQL redo log 的 LSN 机制起什么作用？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：redo log 作用有内容但 LSN 无"}
+{"query_id": "N14", "query": "Cassandra 的一致性哈希与复制策略是怎样的？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Cassandra 零内容，一致性哈希有内容"}
+{"query_id": "N15", "query": "epoll 的水平触发和边缘触发有什么区别？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：epoll 仅一词出现，LT/ET 无"}
+{"query_id": "N16", "query": "Netty 的 Reactor 线程模型是怎样的？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：Netty 零内容"}
+{"query_id": "N17", "query": "ClickHouse 的 MergeTree 引擎原理是什么？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：ClickHouse 零内容"}
+{"query_id": "N18", "query": "Java 的 Flight Recorder 怎么用来排查性能问题？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：JFR 零内容，JVM 主题强邻近"}
+{"query_id": "N19", "query": "Java 的虚拟线程和平台线程有什么区别？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：虚拟线程零内容，JDK 新特性标题存在"}
+{"query_id": "N20", "query": "Rust 的 async 和 await 异步模型是怎么回事？", "expected_chunks": [], "expected_nice": [], "requires_rag": false, "category": "out", "note": "库外：异步 IO 有内容但 Rust 无"}

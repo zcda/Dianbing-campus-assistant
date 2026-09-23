@@ -12,6 +12,17 @@ public interface ChatClient {
      */
     void stream(String systemPrompt, String userPrompt, Listener listener) throws Exception;
 
+    /**
+     * 非流式补全（改造 v1 新增）：查询改写、LLM-as-judge 等短调用用，一次性返回完整文本。
+     *
+     * @param model 模型名，传 null 用默认 chat 模型（judge 必须传与生产不同的模型，避免自己评自己）
+     * @param temperature 采样温度（改写要稳定：0.1）
+     * @param topP        核采样（改写：0.3）
+     * @param timeoutMs   请求级超时（改写超时即走规则兜底）
+     */
+    String complete(String model, String systemPrompt, String userPrompt,
+                    double temperature, double topP, long timeoutMs) throws Exception;
+
     interface Listener {
         void onDelta(String text);
 

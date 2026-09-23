@@ -24,17 +24,43 @@ public class ChunkRepository {
                 .update();
     }
 
-    /** embedding 允许为 null（Embedding 服务不可用时切片仍然落库，重新保存即可重建索引） */
-    public void insert(long noteId, int seq, String content, String contentHash, float[] embedding) {
+    /** 按 seq 顺序返回某篇笔记的切片明细 */
+    public List<ChunkView> findByNoteId(long noteId) {
+        return db.sql("""
+                        SELECT seq, content, char_length(content) AS len, embedding IS NOT NULL AS has_vec,
+                               token_count, level
+                        FROM chunk WHERE note_id = :noteId ORDER BY seq
+                        """)
+                .param("noteId", noteId)
+                .query((rs, row) -> new ChunkView(
+                        rs.getInt("seq"),
+                        rs.getString("content"),
+                        rs.getInt("len"),
+                        rs.getBoolean("has_vec"),
+                        (Integer) rs.getObject("token_count"),
+                        rs.getString("level")))
+                .list();
+    }
+
+    /**
+     * embedding 允许为 null（Embedding 服务不可用时切片仍然落库，重新保存或异步任务重试即可重建索引）。
+     * tsv / tokenCount 由写入侧用 BigramTokenizer 应用层生成（不用 generated column，
+     * 换分词器只需改一个类 + 重建索引，不用改 DDL）。
+     */
+    public void insert(long noteId, int seq, String content, String contentHash, float[] embedding,
+                       String bigrams, int tokenCount) {
         db.sql("""
-                        INSERT INTO chunk(note_id, seq, content, content_hash, embedding)
-                        VALUES (:noteId, :seq, :content, :contentHash, CAST(:embedding AS vector))
+                        INSERT INTO chunk(note_id, seq, content, content_hash, embedding, tsv, token_count)
+                        VALUES (:noteId, :seq, :content, :contentHash, CAST(:embedding AS vector),
+                                to_tsvector('simple', :bigrams), :tokenCount)
                         """)
                 .param("noteId", noteId)
                 .param("seq", seq)
                 .param("content", content)
                 .param("contentHash", contentHash)
                 .param("embedding", embedding == null ? null : VectorCodec.toLiteral(embedding))
+                .param("bigrams", bigrams)
+                .param("tokenCount", tokenCount)
                 .update();
     }
 
