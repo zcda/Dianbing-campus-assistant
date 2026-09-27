@@ -1,0 +1,16 @@
+{"query_id":"I001","query":"我的成绩是否满足2026级软件工程学硕毕业学分要求？","expected_mixed":true,"expected_clarification":false,"required_rule_terms":["2026","软件工程","学硕","毕业学分"]}
+{"query_id":"I002","query":"我是2026级计算机科学与技术学硕，现在已经修了多少学分，距离毕业要求还差多少？","expected_mixed":true,"expected_clarification":false,"required_rule_terms":["2026","计算机科学与技术","学硕","毕业"]}
+{"query_id":"I003","query":"帮我看看本人当前学分够不够2026级生物医学工程学硕毕业条件","expected_mixed":true,"expected_clarification":false,"required_rule_terms":["2026","生物医学工程","学硕","毕业"]}
+{"query_id":"I004","query":"我修过的课程学分和2026级数学学硕培养方案相比还缺哪些类别？","expected_mixed":true,"expected_clarification":false,"required_rule_terms":["2026","数学","学硕","培养方案"]}
+{"query_id":"I005","query":"我是2026级软件工程学硕，查一下已修学分，并说明培养方案的课程学分要求","expected_mixed":true,"expected_clarification":false,"required_rule_terms":["2026","软件工程","学硕","课程学分"]}
+{"query_id":"I006","query":"我现在的学分能毕业吗？","expected_mixed":true,"expected_clarification":true,"required_rule_terms":[]}
+{"query_id":"I007","query":"本人已修学分是否符合培养方案？","expected_mixed":true,"expected_clarification":true,"required_rule_terms":[]}
+{"query_id":"I008","query":"看看我还差多少学分才能达到毕业要求","expected_mixed":true,"expected_clarification":true,"required_rule_terms":[]}
+{"query_id":"I009","query":"我的成绩是多少？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I010","query":"我这学期修了多少学分？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I011","query":"2026级软件工程学硕毕业学分要求是什么？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I012","query":"软件工程培养方案规定的学位课学分是多少？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I013","query":"2026级计算机学硕基本学制几年？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I014","query":"周二第3到4节有哪些空教室？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I015","query":"我能不能毕业并不重要，只想查询2026级软件工程学硕毕业要求","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}
+{"query_id":"I016","query":"如果我以后修满学分，2026级新闻传播学学硕还有哪些必修环节？","expected_mixed":false,"expected_clarification":false,"required_rule_terms":[]}

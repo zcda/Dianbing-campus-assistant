@@ -11,16 +11,16 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.pkb</groupId>
-    <artifactId>pkb</artifactId>
+    <groupId>com.dianbing</groupId>
+    <artifactId>dianbing-assistant</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>杏规</name>
+    <name>电兵助手</name>
     <description>校园规则查看助手：有效规则检索、条款引用与来源追溯</description>
 
     <properties>
         <java.version>17</java.version>
         <tika.version>3.3.2</tika.version>
-        <spring-boot.run.main-class>com.pkb.PkbApplication</spring-boot.run.main-class>
+        <spring-boot.run.main-class>com.dianbing.DianBingAssistantApplication</spring-boot.run.main-class>
     </properties>
 
     <dependencies>

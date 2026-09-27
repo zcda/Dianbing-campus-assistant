@@ -1,15 +1,15 @@
 spring:
   application:
-    name: pkb
+    name: dianbing-assistant
   servlet:
     multipart:
       # 文件导入上限（Spring Boot 默认单文件仅 1MB，不放宽会直接 413）
       max-file-size: 20MB
       max-request-size: 25MB
   datasource:
-    url: ${PKB_DB_URL:jdbc:postgresql://localhost:5432/pkb}
-    username: ${PKB_DB_USER:pkb}
-    password: ${PKB_DB_PASSWORD:pkb123}
+    url: ${DIANBING_DB_URL:${PKB_DB_URL:jdbc:postgresql://localhost:5432/pkb}}
+    username: ${DIANBING_DB_USER:${PKB_DB_USER:pkb}}
+    password: ${DIANBING_DB_PASSWORD:${PKB_DB_PASSWORD:pkb123}}
 
 server:
   address: ${RAG_BIND_ADDRESS:127.0.0.1}
@@ -18,17 +18,27 @@ server:
     # Spring Boot 3 默认不返回异常 message，前端拿不到"不支持的文件类型"这类可读提示
     include-message: always
 
+campus:
+  mcp:
+    server-url: ${CAMPUS_MCP_SERVER_URL:http://127.0.0.1:8090}
+  agent:
+    enabled: ${CAMPUS_AGENT_ENABLED:true}
+    max-tool-calls: 4
+    max-llm-rounds: 5
+    timeout-ms: 15000
+    max-tool-result-chars: 10000
+    planner-timeout-ms: 5000
+
 rag:
   official-domain: ${RAG_OFFICIAL_DOMAIN:uestc.edu.cn}
-  # OpenAI 兼容服务基地址（默认本地 Ollama；对接云 API 时用环境变量 RAG_API_BASE_URL 覆盖）
+  # 向量接口仍走本地 Ollama；DeepSeek 用于对话、Agent 和查询改写。
   api-base-url: ${RAG_API_BASE_URL:http://localhost:11434/v1}
-  # Ollama 无需鉴权，占位 "ollama" 即可；对接云 API 时设置环境变量 LLM_API_KEY 覆盖
+  # 向量接口使用的 API Key；本地 Ollama 无需鉴权。
   api-key: ${LLM_API_KEY:ollama}
-  # 可选：仅让对话/改写走云端快速模型，向量仍用上面的本地 Ollama。
-  chat-api-base-url: ${RAG_CHAT_API_BASE_URL:}
+  # 对话、校园 Agent 与查询改写共用 DeepSeek 聊天接口。
+  chat-api-base-url: ${RAG_CHAT_API_BASE_URL:https://api.deepseek.com}
   chat-api-key: ${RAG_CHAT_API_KEY:}
-  # 默认本地 qwen2.5:7b，与 README 快速启动命令一致；云端模型可通过环境变量覆盖。
-  chat-model: ${RAG_CHAT_MODEL:qwen2.5:7b}
+  chat-model: ${RAG_CHAT_MODEL:deepseek-flash}
   # 向量模型：bge-m3，1024 维（ollama pull bge-m3）
   embedding-model: ${RAG_EMBEDDING_MODEL:bge-m3}
   embedding-dimension: 1024

@@ -5,3 +5,7 @@ target/
 .DS_Store
 *.log
 .env
+
+# Resume editing helpers are local-only.
+resume_*.py
+update_resume_*.py

@@ -1,18 +1,18 @@
 {
-  "student": {"id": "DEMO-001", "name": "演示学生", "major": "计算机技术", "cohort": 2025},
+  "student": {"id": "DEMO-001", "name": "演示学生", "major": "计算机科学与技术", "cohort": 2026},
   "courses": [
-    {"code": "CS501", "name": "高级算法", "credits": 3, "category": "专业课", "semester": "2025-秋", "teacher": "王老师", "description": "算法设计与复杂度分析", "prerequisites": []},
-    {"code": "CS502", "name": "机器学习", "credits": 3, "category": "专业课", "semester": "2025-秋", "teacher": "李老师", "description": "监督学习与模型评估", "prerequisites": []},
-    {"code": "GE501", "name": "学术英语", "credits": 2, "category": "公共课", "semester": "2025-秋", "teacher": "赵老师", "description": "学术阅读与写作", "prerequisites": []},
+    {"code": "CS501", "name": "高级算法", "credits": 3, "category": "专业课", "semester": "2026-春", "teacher": "王老师", "description": "算法设计与复杂度分析", "prerequisites": []},
+    {"code": "CS502", "name": "机器学习", "credits": 3, "category": "专业课", "semester": "2026-春", "teacher": "李老师", "description": "监督学习与模型评估", "prerequisites": []},
+    {"code": "GE501", "name": "学术英语", "credits": 2, "category": "公共课", "semester": "2026-春", "teacher": "赵老师", "description": "学术阅读与写作", "prerequisites": []},
     {"code": "CS503", "name": "数据库系统", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "陈老师", "description": "数据库设计与事务处理", "prerequisites": []},
     {"code": "CS504", "name": "分布式系统", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "刘老师", "description": "一致性协议与分布式存储", "prerequisites": ["CS501"]},
     {"code": "CS505", "name": "安全软件工程", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "周老师", "description": "安全设计与测试", "prerequisites": ["CS503"]},
     {"code": "CS506", "name": "软件测试", "credits": 2, "category": "专业课", "semester": "2026-秋", "teacher": "孙老师", "description": "测试设计与质量保证", "prerequisites": ["CS501"]}
   ],
   "grades": [
-    {"courseCode": "CS501", "semester": "2025-秋", "score": 91, "status": "已通过"},
-    {"courseCode": "CS502", "semester": "2025-秋", "score": 84, "status": "已通过"},
-    {"courseCode": "GE501", "semester": "2025-秋", "score": 88, "status": "已通过"}
+    {"courseCode": "CS501", "semester": "2026-春", "score": 91, "status": "已通过"},
+    {"courseCode": "CS502", "semester": "2026-春", "score": 84, "status": "已通过"},
+    {"courseCode": "GE501", "semester": "2026-春", "score": 88, "status": "已通过"}
   ],
   "schedule": [
     {"courseCode": "CS503", "semester": "2026-秋", "weekday": 4, "startSection": 1, "endSection": 2, "room": "A103"},

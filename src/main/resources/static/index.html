@@ -16,6 +16,10 @@ header h1 { font-size: 17px; color: #00b96b; }
 .warn { color: #d4380d; background: #fff2e8; padding: 3px 10px; border-radius: 4px; font-size: 12px; }
 
 main { flex: 1; display: flex; min-height: 0; }
+.page-chat .sessions { width: 250px; }
+.page-chat .chat { flex: 1 1 0; }
+.page-import .notes { width: 300px; }
+.page-import .detail { flex: 1 1 0; }
 .pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: #fff; border-right: 1px solid #e5e6eb; }
 .pane:last-child { border-right: none; }
 .sessions { width: 190px; flex-shrink: 0; background: #fafbfc; }
@@ -75,7 +79,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
 .chunk-seq { font-weight: 600; color: #00b96b; }
 .chunk-sec { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4e5969; }
 .chunk-meta { flex-shrink: 0; }
-.chunk-body { font-family: inherit; font-size: 12px; line-height: 1.65; color: #4e5969; white-space: pre-wrap; word-break: break-word; max-height: 190px; overflow: hidden; }
+.chunk-body { font-family: inherit; font-size: 12px; line-height: 1.65; color: #4e5969; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
 
 /* 问答 */
 .chat-head { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-bottom: 1px solid #f0f1f3; flex-shrink: 0; }
@@ -113,13 +117,17 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
 <body>
 <div id="app">
   <header>
-    <h1>电兵助手 · 校园智能助手演示</h1>
-    <a href="/campus.html" style="color:#00a763;font-size:13px;margin-left:auto">校园服务 Mock 演示 →</a>
+    <h1>{{ page === 'chat' ? '电兵助手 · 智能问答' : '电兵助手 · 规则与 PDF 导入' }}</h1>
+    <nav style="display:flex;align-items:center;gap:16px;margin-left:auto">
+      <a href="/" :style="navStyle('chat')">问答</a>
+      <a href="/?page=import" :style="navStyle('import')">规则与 PDF 导入</a>
+      <a href="/campus.html" style="color:#00a763;font-size:13px">校园服务 Mock 演示 →</a>
+    </nav>
     <span v-if="!hasApiKey" class="warn">模型服务未配置，规则可保存，问答暂不可用。</span>
   </header>
-  <main>
+  <main :class="'page-' + page">
     <!-- ① 会话列表 -->
-    <aside class="pane sessions">
+    <aside v-if="page === 'chat'" class="pane sessions">
       <div class="pane-head">
         <span class="pane-title">会话</span>
         <button class="mini primary" @click="createConversation">+ 新建</button>
@@ -140,7 +148,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
     </aside>
 
     <!-- ② 规则列表 -->
-    <aside class="pane notes">
+    <aside v-if="page === 'import'" class="pane notes">
       <div class="pane-head">
         <span class="pane-title">规则 <span class="count">{{ notes.length }}</span></span>
         <div class="pane-actions">
@@ -165,7 +173,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
     </aside>
 
     <!-- ③ 笔记详情：正文 / 分块 -->
-    <section class="pane detail">
+    <section v-if="page === 'import'" class="pane detail">
       <div class="tabs">
         <button class="tab" :class="{ on: detailTab === 'content' }" @click="detailTab = 'content'">正文</button>
         <button class="tab" :class="{ on: detailTab === 'chunks' }" @click="showChunks">
@@ -215,7 +223,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
     </section>
 
     <!-- ④ 问答 -->
-    <section class="pane chat">
+    <section v-if="page === 'chat'" class="pane chat">
       <div class="chat-head">
         <span class="pane-title">{{ activeConversation ? activeConversation.title : '问答' }}</span>
         <span v-if="activeConversation && activeConversation.asking" class="busy">正在回答…</span>
@@ -236,7 +244,7 @@ button.mini { padding: 3px 9px; font-size: 12px; border-radius: 5px; }
               <div v-if="m.citationWarning" class="citation-warning">{{ m.citationWarning }}</div>
               <div v-if="m.sources && m.sources.length" class="sources">
                 <div class="sources-title">引用来源（点击跳转到对应分块）</div>
-                <div v-for="s in m.sources" :key="s.index" class="source-card" @click="jumpToChunk(s.noteId, s.seq)">
+                <div v-for="s in m.sources" :key="s.index" class="source-card" @click="goToChunk(s.noteId, s.seq)">
                   <div class="source-head">
                     <span>[{{ s.index }}] {{ s.noteTitle }}{{ s.rule?.articleNo ? ' · ' + s.rule.articleNo : ' · 第 ' + (s.seq + 1) + ' 块' }}</span>
                     <span class="sim">{{ (s.similarity * 100).toFixed(0) }}%</span>
@@ -269,6 +277,8 @@ const { createApp, ref, computed, nextTick, onMounted } = Vue;
 createApp({
   setup() {
     // ---- 笔记 ----
+    const page = new URLSearchParams(window.location.search).get('page') === 'import' ? 'import' : 'chat';
+    const navStyle = target => ({ color: page === target ? '#00a763' : '#4e5969', fontSize: '13px', fontWeight: page === target ? '600' : '400', textDecoration: 'none' });
     const notes = ref([]);
     const hasApiKey = ref(true);
     const selectedNoteId = ref(null);
@@ -485,6 +495,10 @@ createApp({
       });
     }
 
+    function goToChunk(noteId, seq) {
+      window.location.href = `/?page=import&noteId=${encodeURIComponent(noteId)}&seq=${encodeURIComponent(seq)}`;
+    }
+
     // ================= 会话 =================
     async function loadConversations() {
       const res = await fetch('/api/conversations');
@@ -625,15 +639,25 @@ createApp({
     onMounted(async () => {
       await loadNotes();
       loadConfig();
-      await loadConversations();
+      if (page === 'import') {
+        const params = new URLSearchParams(window.location.search);
+        const noteId = params.get('noteId');
+        const seqParam = params.get('seq');
+        if (noteId) {
+          if (seqParam !== null && Number(seqParam) >= 0) await jumpToChunk(noteId, Number(seqParam));
+          else openNote(noteId);
+        }
+      } else {
+        await loadConversations();
+      }
     });
 
     return {
-      notes, hasApiKey, selectedNoteId, editingNew, form, currentNote, saving, importing, fileInput,
+      page, navStyle, notes, hasApiKey, selectedNoteId, editingNew, form, currentNote, saving, importing, fileInput,
       detailTab, chunks, highlightSeq, chunkList,
       conversations, activeConversationId, activeConversation, chatBox,
       render, newNote, openNote, saveNote, deleteNote, pickFile, importFile, loadBundled,
-      showChunks, sectionOf, jumpToChunk,
+      showChunks, sectionOf, jumpToChunk, goToChunk,
       createConversation, selectConversation, deleteConversation, ask, snippet, formatTime
     };
   }
